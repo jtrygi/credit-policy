@@ -35,6 +35,8 @@ DISPLAY_NAMES = {
     "LR (Forward-selected)": "LR (Forward-selected, AUC)",
     "Random Forest": "Random Forest",
     "XGBoost": "XGBoost",
+    "Random Forest (tuned)": "Random Forest (tuned)",
+    "XGBoost (tuned)": "XGBoost (tuned)",
 }
 
 

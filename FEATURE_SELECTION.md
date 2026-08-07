@@ -55,6 +55,23 @@ Random Forest uses **permutation importance**, not impurity importance — impur
 
 **XGBoost wins on every single metric.** It's not close on Gini/KS (0.396/0.288 vs the next-best 0.381/0.278) despite using the same 30-variable candidate pool as everything else — the gain is from capturing nonlinear/interaction effects, not from different inputs. Random Forest, by contrast, barely beats the simple curated logistic regression, which says the *depth-8, min-leaf-500* regularization on this particular ensemble is leaving most of its power on the table relative to XGBoost's boosting.
 
+## Hyperparameter tuning: Random Forest + XGBoost
+
+`scripts/tune_ensembles.py`. Randomized search (25 RF trials, 40 XGBoost trials), scored by validation AUC same as the wrapper selection, on the same 30-variable/104-column pool as the baseline RF/XGBoost above -- isolates what tuning alone buys, independent of feature set.
+
+Three of these background runs got killed mid-search by what looks like a ~20-25 minute limit on long-running background tasks in this environment (not a bug in the search itself). Fixed by making the search checkpoint every trial to CSV immediately and resume from the last completed trial on relaunch, burning the RNG through the same number of draws first so the resumed sequence matches an uninterrupted run. Also removed `max_depth=None` from the RF grid after it caused one trial to run 9+ minutes on its own (unbounded-depth trees on 517K rows x 254 columns) — a real cost trap in the search space, not just bad luck.
+
+| Model | AUC | Gini | Brier | KS | Best hyperparameters |
+|---|---|---|---|---|---|
+| Random Forest (untuned) | 0.685 | 0.370 | 0.1211 | 0.267 | n_estimators=300, max_depth=8, min_samples_leaf=500 |
+| Random Forest (tuned) | 0.691 | 0.382 | 0.1202 | 0.277 | n_estimators=300, max_depth=12, min_samples_leaf=100, max_features=0.3 |
+| XGBoost (untuned) | 0.698 | 0.396 | 0.1195 | 0.288 | n_estimators=300, max_depth=6, learning_rate=0.05 |
+| **XGBoost (tuned)** | **0.700** | **0.399** | **0.1193** | **0.294** | n_estimators=500, max_depth=4, learning_rate=0.1, subsample=0.6, colsample_bytree=0.8, min_child_weight=3, reg_lambda=5 |
+
+**Takeaway: tuning bought less than feature set did.** RF gained +0.006 AUC from tuning (0.685→0.691) — matching, not exceeding, what the forward-selected logistic regression already got with 24 linear features. XGBoost gained only +0.002 (0.698→0.700) from 40 trials of search. Compare that to the max-performance experiment below: dropping the 30-variable constraint and using the full 254-column set (with early stopping, not exhaustive tuning) reached **0.708 val AUC** — a bigger jump than either tuning search found. For this problem, at this point in the pipeline, feature set mattered more than hyperparameters.
+
+Both convergence charts (`images/tune_rf_convergence.png`, `images/tune_xgb_convergence.png`) show the same pattern: an early jump to near-best within the first 5-17 trials, then a long flat tail of trials clustered in a narrow band around it — the search had already converged well before it finished.
+
 ## On specificity vs. recall (direct answer, with numbers)
 
 Your proposal — optimize for specificity since recall-chasing produces too many false positives — runs into the mirror-image version of the problem you already correctly identified in recall: a model that **approves everyone** gets specificity = 1.0 (zero false positives) while catching **zero** defaults. Sensitivity and specificity are the same threshold dial, not two independently optimizable things — every cutoff produces one (sensitivity, specificity) pair, so "optimize specificity" with no constraint just slides the dial to approve-everyone.

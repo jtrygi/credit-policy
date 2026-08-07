@@ -15,6 +15,7 @@ interpretability constraint (design doc: "credit committee can review it"),
 not an oversight to tune away.
 """
 import json
+import os
 import random
 import time
 
@@ -35,8 +36,11 @@ MUTED = "#6B7280"
 GRID = "#E5E7EB"
 
 RF_GRID = dict(
+    # max_depth intentionally capped -- None (unbounded) caused a single
+    # trial to run 9+ minutes on 517K rows x 254 columns and got the whole
+    # job killed. 12 is already deeper than the tuned depth-8 RF needed.
     n_estimators=[100, 200, 300, 500],
-    max_depth=[4, 6, 8, 10, 12, None],
+    max_depth=[4, 6, 8, 10, 12],
     min_samples_leaf=[50, 100, 300, 500, 1000],
     max_features=["sqrt", "log2", 0.3, 0.5, 0.7],
 )
@@ -57,24 +61,56 @@ def sample_params(grid, rng):
     return {k: rng.choice(v) for k, v in grid.items()}
 
 
-def random_search(model_name, fit_fn, grid, n_trials, X_train, y_train, X_val, y_val, seed=42):
+def random_search(model_name, fit_fn, grid, n_trials, X_train, y_train, X_val, y_val,
+                   csv_path, seed=42):
+    """Incremental checkpointing + resume: each trial's row is appended to
+    csv_path immediately (a killed/crashed job -- this has happened three
+    times now in this project, apparently a ~20-25 min background-task
+    limit in this environment -- still leaves usable partial results on
+    disk instead of losing everything). If csv_path already has rows from
+    a prior run, pick up at the next trial rather than restarting, burning
+    the RNG through the same number of draws first so the sampled sequence
+    for already-completed trials matches what actually ran.
+    """
     rng = random.Random(seed)
-    history = []
+    param_keys = list(grid.keys())
+
+    history_rows = []
+    start_trial = 1
     best = None
+    if os.path.exists(csv_path):
+        existing = pd.read_csv(csv_path)
+        if len(existing):
+            history_rows = existing.to_dict("records")
+            start_trial = int(existing["trial"].max()) + 1
+            best_row = max(history_rows, key=lambda r: r["auc"])
+            best_params = {k: best_row[k] for k in param_keys}
+            best = (best_params, best_row)
+            print(f"[{model_name}] Resuming at trial {start_trial} "
+                  f"({len(history_rows)} already checkpointed, best so far AUC={best[1]['auc']:.4f})", flush=True)
+    for _ in range(start_trial - 1):
+        sample_params(grid, rng)  # keep the RNG sequence aligned with the completed trials
+
     t0 = time.time()
-    for trial in range(1, n_trials + 1):
+    wrote_header = os.path.exists(csv_path) and len(history_rows) > 0
+    for trial in range(start_trial, n_trials + 1):
         params = sample_params(grid, rng)
         model = fit_fn(params)
         model.fit(X_train, y_train)
         p = model.predict_proba(X_val)[:, 1]
         m = full_metrics(y_val, p, X_train.shape[1])
         row = dict(trial=trial, **params, **m)
-        history.append(row)
+        history_rows.append(row)
+
+        row_df = pd.DataFrame([row])
+        row_df.to_csv(csv_path, mode="a", header=not wrote_header, index=False)
+        wrote_header = True
+
         if best is None or m["auc"] > best[1]["auc"]:
-            best = (params, m, model)
+            best = (params, m)
         print(f"[{model_name}] Trial {trial:2d}/{n_trials}: AUC={m['auc']:.4f} Brier={m['brier']:.5f} "
               f"KS={m['ks']:.4f}  best_so_far={best[1]['auc']:.4f}  ({time.time() - t0:.0f}s)", flush=True)
-    return best, pd.DataFrame(history)
+    return best, pd.DataFrame(history_rows)
 
 
 def plot_convergence(history_df, model_name, color, filename):
@@ -106,14 +142,15 @@ def main():
         p = dict(params)
         return xgb.XGBClassifier(random_state=42, n_jobs=8, **p)
 
+    rf_csv = "images/tune_rf_history.csv"
+    xgb_csv = "images/tune_xgb_history.csv"
+
     print("=== Random Forest random search (25 trials) ===", flush=True)
-    rf_best, rf_history = random_search("RF", make_rf, RF_GRID, 25, X_train, y_train, X_val, y_val)
-    rf_history.to_csv("images/tune_rf_history.csv", index=False)
+    rf_best, rf_history = random_search("RF", make_rf, RF_GRID, 25, X_train, y_train, X_val, y_val, rf_csv)
     plot_convergence(rf_history, "Random Forest", HUE_RF, "images/tune_rf_convergence.png")
 
     print("\n=== XGBoost random search (40 trials) ===", flush=True)
-    xgb_best, xgb_history = random_search("XGBoost", make_xgb, XGB_GRID, 40, X_train, y_train, X_val, y_val)
-    xgb_history.to_csv("images/tune_xgb_history.csv", index=False)
+    xgb_best, xgb_history = random_search("XGBoost", make_xgb, XGB_GRID, 40, X_train, y_train, X_val, y_val, xgb_csv)
     plot_convergence(xgb_history, "XGBoost", HUE_GBM, "images/tune_xgb_convergence.png")
 
     with open("images/all_model_results.json") as f:
