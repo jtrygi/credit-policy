@@ -1,8 +1,21 @@
 # Segmentation & Policy Design (Steps 3, 6, 7)
 
-Step 3 (baseline) was never actually built as an artifact during the modeling phase (FEATURE_SELECTION.md) -- it's built here first, since Step 7 explicitly requires comparing against it. All dollar figures are **per 1,000 test-population applicants** (declined applicants contribute $0), matching Section 4's definition exactly. No cost of funds is modeled anywhere in this document -- same simplification as `economics.py`, deferred to Step 8's sensitivity analysis.
+## What this is actually testing
+
+LendingClub already sorts applicants into 7 risk buckets using its own grade (a single risk score -- conceptually the same idea as bucketing by FICO alone) and treats "above a cutoff grade" as the approve/decline rule. The question this document answers: **can a richer multi-variable model (24-104 variables, not just one score) rank-order default risk better than that single grade-based cutoff** -- and if so, is switching to it worth real money?
+
+Two separate things happen below:
+
+1. **Step 3** measures what grade-bucketing alone gets you today (no model involved yet) -- bad rate and profit at every possible grade cutoff.
+2. **Steps 6-7** take a model's finer score and ask two versions of "better than grade": *at the exact same approval volume grade gives today, does picking who to approve by model score instead of grade produce fewer defaults?* And the flip side, *at the exact same loss rate grade gives today, does the model let us approve more people?* Both turn out to be yes, modestly (real dollars, not huge ones) -- detailed in Step 7 below.
+
+**One important limit on how far "better than grade" can be claimed:** this dataset only contains loans LendingClub *already approved*. There's no population of people they rejected, so nothing here can say whether grade is wrongly admitting or excluding people relative to the true, unobserved applicant pool -- only whether, among people who'd already clear grade-based underwriting, a model can pick a better subset than grade does. That caveat shows up again below (Step 3's "approve-all is profit-maximizing" finding is a direct consequence of it), but it applies to the whole exercise.
+
+All dollar figures are **per 1,000 test-population applicants** (declined applicants contribute $0), matching Section 4's definition exactly. No cost of funds is modeled anywhere in this document -- same simplification as `economics.py`, deferred to Step 8's sensitivity analysis.
 
 ## Step 3: baseline policy
+
+Step 3 was never actually built as an artifact during the modeling phase (FEATURE_SELECTION.md) -- it's built here first, since Step 7 explicitly requires comparing against it.
 
 `scripts/reconstruct_policy_split.py` first replays `prepare_data.py`'s exact pre-split logic (same target definition, same feature engineering, same two-stage `train_test_split(random_state=42)`) but keeps `id`/`grade`/`funded_amnt`/`total_pymnt`/`collection_recovery_fee` -- columns `prepare_data.py` correctly drops as leakage/identifiers before modeling, but which are needed now for realized-$ policy evaluation. **Verified, not assumed:** the reconstructed train/val/test splits were checked for exact positional match against the existing `bad` column in `data/{train,val,test}.csv` before trusting any downstream dollar figure -- all three matched exactly.
 
