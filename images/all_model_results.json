@@ -1,0 +1,139 @@
+{
+  "Logistic Regression": {
+    "auc": 0.683724833125,
+    "gini": 0.36744966625,
+    "avg_precision": 0.2661058143225263,
+    "brier": 0.12081353177540421,
+    "threshold": 0.21977889467442865,
+    "precision": 0.2810200857594223,
+    "recall": 0.3734853029394121,
+    "f1": 0.3207211848036059,
+    "confusion_matrix": [
+      [
+        78172,
+        15929
+      ],
+      [
+        10444,
+        6226
+      ]
+    ],
+    "approval_rate": 0.7999927778931308,
+    "bad_rate_declined": 0.2810200857594223,
+    "bad_rate_approved": 0.11785682043874696,
+    "ks": 0.2665148355223909,
+    "specificity": 0.8307244343843317,
+    "sensitivity_at_95_specificity": 0.14601079784043192,
+    "n_features": 20
+  },
+  "Decision Tree": {
+    "auc": 0.6652385358041727,
+    "gini": 0.3304770716083454,
+    "avg_precision": 0.23838091096265787,
+    "brier": 0.12221257455272995,
+    "threshold": 0.20836109260493005,
+    "precision": 0.25784900401672267,
+    "recall": 0.3773845230953809,
+    "f1": 0.30636992305444627,
+    "confusion_matrix": [
+      [
+        75994,
+        18107
+      ],
+      [
+        10379,
+        6291
+      ]
+    ],
+    "approval_rate": 0.7797437957588178,
+    "bad_rate_declined": 0.25784900401672267,
+    "bad_rate_approved": 0.12016486633554467,
+    "ks": 0.2433345562213473,
+    "specificity": 0.8075790905516413,
+    "sensitivity_at_95_specificity": 0.046970605878824234,
+    "n_features": 20
+  },
+  "Logistic Regression (Brier-selected)": {
+    "auc": 0.6836048290708485,
+    "gini": 0.36720965814169704,
+    "avg_precision": 0.26621046011317684,
+    "brier": 0.12080686904474769,
+    "threshold": 0.22007109247402468,
+    "precision": 0.28047844730309185,
+    "recall": 0.37276544691061786,
+    "f1": 0.32010302640051513,
+    "confusion_matrix": [
+      [
+        78160,
+        15941
+      ],
+      [
+        10456,
+        6214
+      ]
+    ],
+    "approval_rate": 0.7999927778931308,
+    "bad_rate_declined": 0.28047844730309185,
+    "bad_rate_approved": 0.11799223616502663,
+    "n_features": 15,
+    "features": [
+      "grade",
+      "loan_to_income",
+      "home_ownership",
+      "dti",
+      "inq_last_6mths",
+      "fico_avg",
+      "emp_length_years",
+      "term_months",
+      "purpose",
+      "revol_util",
+      "open_acc",
+      "revol_bal",
+      "total_acc",
+      "verification_status",
+      "int_rate"
+    ],
+    "ks": 0.2664580037096161,
+    "specificity": 0.8305969118287797,
+    "sensitivity_at_95_specificity": 0.1487102579484103
+  },
+  "LR (Forward-selected)": {
+    "auc": 0.6905605189415778,
+    "gini": 0.38112103788315554,
+    "brier": 0.1202179923955441,
+    "ks": 0.2775630980221528,
+    "threshold": 0.22227625690641792,
+    "precision": 0.28828706838185514,
+    "recall": 0.38314337132573484,
+    "f1": 0.32901481004507405,
+    "specificity": 0.8324353620046546,
+    "sensitivity_at_95_specificity": 0.15116976604679064,
+    "n_features": 24
+  },
+  "Random Forest": {
+    "auc": 0.6849808219246895,
+    "gini": 0.3699616438493789,
+    "brier": 0.12110439876249704,
+    "ks": 0.2665392155094661,
+    "threshold": 0.20893707456606733,
+    "precision": 0.28196795305800043,
+    "recall": 0.37474505098980204,
+    "f1": 0.3218029620090148,
+    "specificity": 0.8309475988565478,
+    "sensitivity_at_95_specificity": 0.1468506298740252,
+    "n_features": 104
+  },
+  "XGBoost": {
+    "auc": 0.697832485022108,
+    "gini": 0.3956649700442161,
+    "brier": 0.11949020624160767,
+    "ks": 0.2880422334253461,
+    "threshold": 0.22410883009433746,
+    "precision": 0.2924396298803882,
+    "recall": 0.3886622675464907,
+    "f1": 0.3337540244687701,
+    "specificity": 0.8334130349305533,
+    "sensitivity_at_95_specificity": 0.1608878224355129,
+    "n_features": 104
+  }
+}

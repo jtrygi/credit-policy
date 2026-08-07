@@ -1,0 +1,6 @@
+{
+  "best_model": "XGBoost (full features, early-stopped)",
+  "val_auc": 0.7081315359333846,
+  "test_auc": 0.7092413464555819,
+  "test_ks": 0.3066404261814105
+}

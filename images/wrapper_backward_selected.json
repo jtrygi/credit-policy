@@ -1,0 +1,32 @@
+{
+  "method": "backward",
+  "selected": [
+    "sub_grade",
+    "int_rate",
+    "fico_avg",
+    "acc_open_past_24mths",
+    "loan_to_income",
+    "total_bc_limit",
+    "num_tl_op_past_12m",
+    "term_months",
+    "dti",
+    "total_rev_hi_lim",
+    "verification_status",
+    "mo_sin_rcnt_tl",
+    "tot_cur_bal",
+    "inq_last_6mths",
+    "mo_sin_rcnt_rev_tl_op",
+    "mort_acc",
+    "mths_since_recent_bc",
+    "percent_bc_gt_75",
+    "home_ownership",
+    "mo_sin_old_rev_tl_op",
+    "bc_util",
+    "purpose",
+    "revol_util",
+    "num_actv_rev_tl"
+  ],
+  "auc": 0.6905605189415778,
+  "brier": 0.12021799239554416,
+  "ks": 0.2775630980221528
+}

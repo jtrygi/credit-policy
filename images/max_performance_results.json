@@ -1,0 +1,26 @@
+{
+  "MLP (overfit, 50K subsample)": {
+    "train_auc": 0.9988738597342016,
+    "val_auc": 0.5949392175953179,
+    "gap": 0.40393464213888375
+  },
+  "MLP (regularized, full train)": {
+    "train_auc": 0.7031618972841933,
+    "val_auc": 0.6940405083774267,
+    "gap": 0.009121388906766614,
+    "ks": 0.2808052525370209,
+    "n_iter": 12
+  },
+  "XGBoost (overfit)": {
+    "train_auc": 0.9978589443557703,
+    "val_auc": 0.6847137359916035,
+    "gap": 0.3131452083641668
+  },
+  "XGBoost (full features, early-stopped)": {
+    "train_auc": 0.7522992931785826,
+    "val_auc": 0.7081315359333846,
+    "gap": 0.04416775724519795,
+    "ks": 0.3041162207830057,
+    "best_iteration": 1501
+  }
+}
