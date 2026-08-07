@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(//c/Users/jhtry/Projects/credit-policy/.env)",
+      "Read(//c/Users/jhtry/Projects/credit-policy/.env.*)",
+      "Edit(//c/Users/jhtry/Projects/credit-policy/.env)",
+      "Edit(//c/Users/jhtry/Projects/credit-policy/.env.*)",
+      "Write(//c/Users/jhtry/Projects/credit-policy/.env)",
+      "Write(//c/Users/jhtry/Projects/credit-policy/.env.*)",
+      "Bash(cat .env*)",
+      "Bash(type .env*)"
+    ],
+    "allow": [
+      "Read(//c/Users/jhtry/Projects/credit-policy/.env.example)",
+      "Edit(//c/Users/jhtry/Projects/credit-policy/.env.example)",
+      "Write(//c/Users/jhtry/Projects/credit-policy/.env.example)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Write|Edit|NotebookEdit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\jhtry\\Projects\\credit-policy\\.claude\\hooks\\env-guard.js\""
+          }
+        ]
+      }
+    ]
+  }
+}
