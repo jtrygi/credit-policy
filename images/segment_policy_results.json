@@ -1,0 +1,100 @@
+{
+  "results": {
+    "lr24": {
+      "model": "LR-24 (interpretable)",
+      "bins": [
+        -Infinity,
+        0.06389242688749279,
+        0.09843939538154083,
+        0.1336662365096207,
+        0.17608871214442834,
+        0.23709000778180667,
+        Infinity
+      ],
+      "val_monotonic": true,
+      "test_monotonic": true,
+      "decisions": {
+        "1": true,
+        "2": true,
+        "3": true,
+        "4": true,
+        "5": true,
+        "6": true
+      },
+      "test_portfolio": {
+        "n_approved": 110772,
+        "volume_pct": 1.0,
+        "bad_rate": 0.15048929332322247,
+        "revenue_per_1000": 1977866.1090857384,
+        "loss_per_1000": 745283.3728910828,
+        "net_profit_per_1000": 1232582.7361946558
+      },
+      "frontier": {
+        "equal_volume": {
+          "volume_pct": 0.933160004333225,
+          "bad_rate": 0.1361446482470397,
+          "net_profit_per_1000": 1136650.1341732088,
+          "bad_rate_delta_vs_baseline": -0.0024185434563888386
+        },
+        "equal_loss_rate": {
+          "volume_pct": 0.9467284151229552,
+          "bad_rate": 0.13856070791734607,
+          "net_profit_per_1000": 1153974.142791881,
+          "volume_delta_vs_baseline": 0.013568410789730256
+        }
+      }
+    },
+    "xgb": {
+      "model": "XGBoost (full-features)",
+      "bins": [
+        -Infinity,
+        0.05825459166666666,
+        0.09252955666666667,
+        0.12981588,
+        0.17592228,
+        0.24257883666666658,
+        Infinity
+      ],
+      "val_monotonic": true,
+      "test_monotonic": true,
+      "decisions": {
+        "1": true,
+        "2": true,
+        "3": true,
+        "4": true,
+        "5": true,
+        "6": true
+      },
+      "test_portfolio": {
+        "n_approved": 110772,
+        "volume_pct": 1.0,
+        "bad_rate": 0.15048929332322247,
+        "revenue_per_1000": 1977866.1090857384,
+        "loss_per_1000": 745283.3728910828,
+        "net_profit_per_1000": 1232582.7361946558
+      },
+      "frontier": {
+        "equal_volume": {
+          "volume_pct": 0.933160004333225,
+          "bad_rate": 0.1346354771302531,
+          "net_profit_per_1000": 1169506.5684245569,
+          "bad_rate_delta_vs_baseline": -0.00392771457317545
+        },
+        "equal_loss_rate": {
+          "volume_pct": 0.9544740548152962,
+          "bad_rate": 0.13856179477721345,
+          "net_profit_per_1000": 1194178.8436814023,
+          "volume_delta_vs_baseline": 0.021314050482071245
+        }
+      }
+    }
+  },
+  "baseline": {
+    "cutoff": "A-D",
+    "volume_pct": 0.933160004333225,
+    "bad_rate": 0.13856319170342854,
+    "revenue_per_1000": 1719567.6858553065,
+    "loss_per_1000": 621587.0912520909,
+    "net_profit_per_1000": 1097980.5946032156
+  }
+}
