@@ -1,0 +1,59 @@
+{
+  "scenarios": [
+    {
+      "scenario": "Base case",
+      "baseline": 800946.2039628697,
+      "lr24": 808143.7959836195,
+      "lr24_delta": 7197.592020749813,
+      "xgb": 816119.8120104087,
+      "xgb_delta": 15173.608047539019
+    },
+    {
+      "scenario": "Severity shock (+20% loss/bad loan)",
+      "baseline": 667836.1900009569,
+      "lr24": 675829.4839726367,
+      "lr24_delta": 7993.293971679872,
+      "xgb": 682232.9803472849,
+      "xgb_delta": 14396.790346328053
+    },
+    {
+      "scenario": "Macro shock (bad rate x1.39, ~2008 vintage)",
+      "baseline": 444152.25242196425,
+      "lr24": 452710.02733272786,
+      "lr24_delta": 8557.774910763605,
+      "xgb": 456566.7087542941,
+      "xgb_delta": 12414.456332329835
+    },
+    {
+      "scenario": "Combined (severity + macro)",
+      "baseline": 258596.89295905753,
+      "lr24": 268263.876389418,
+      "lr24_delta": 9666.983430360444,
+      "xgb": 269928.4654158994,
+      "xgb_delta": 11331.572456841881
+    }
+  ],
+  "baseline_stats": {
+    "n": 319556.0,
+    "volume_pct": 0.9617619883164139,
+    "bad_rate": 0.14064827448084216,
+    "avg_profit_good": 1774.3627109616982,
+    "avg_loss_bad": -4920.1542272776915
+  },
+  "lr24_stats": {
+    "n": 320289.0,
+    "volume_pct": 0.9639680853305083,
+    "bad_rate": 0.140647977295505,
+    "avg_profit_good": 1774.1873264256383,
+    "avg_loss_bad": -4879.560205012559
+  },
+  "xgb_stats": {
+    "n": 321604.0,
+    "volume_pct": 0.9679258173544292,
+    "bad_rate": 0.14064812626708623,
+    "avg_profit_good": 1785.9748227364535,
+    "avg_loss_bad": -4917.35818707815
+  },
+  "severity_shock": 0.2,
+  "frequency_shock": 0.394
+}
