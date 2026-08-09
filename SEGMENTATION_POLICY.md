@@ -1,5 +1,7 @@
 # Segmentation & Policy Design (Steps 3, 6, 7)
 
+> **Scope note:** every $ figure below comes from a random train/val/test split (loans from every vintage year scattered across all three). That's a real but limited form of evidence -- it tests generalization to held-out *loans*, not to a held-out *time period*. See `OOT_VALIDATION.md` for the same comparison rebuilt on a chronological split: the edge over baseline survives out-of-time but is roughly 5-8x smaller than the numbers below suggest. Use the OOT figures, not these, for the Step 8 business case.
+
 ## What this is actually testing
 
 LendingClub already sorts applicants into 7 risk buckets using its own grade (a single risk score -- conceptually the same idea as bucketing by FICO alone) and treats "above a cutoff grade" as the approve/decline rule. The question this document answers: **can a richer multi-variable model (24-104 variables, not just one score) rank-order default risk better than that single grade-based cutoff** -- and if so, is switching to it worth real money?

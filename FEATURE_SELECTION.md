@@ -2,6 +2,8 @@
 
 Follow-up to `MODELING.md`, addressing three points: (1) the original 20-feature curated set was hand-picked, not derived — this replaces that with a systematic screen; (2) only forward selection had been run — this adds backward, stepwise, LASSO, and two nonlinear methods; (3) a direct answer on the specificity-vs-recall question, with numbers.
 
+> **Scope note:** all AUC/KS/Brier figures below come from a random train/val/test split. `OOT_VALIDATION.md` reruns the two winning candidates (LR-24, XGBoost) on a chronological split and finds discrimination barely moves (AUC -0.001 for LR-24, -0.009 for XGBoost) -- reassuring, but see that document for the full picture, including how much the *downstream $ conclusions* move.
+
 ## 1. Systematic qualifying-variable screen (Information Value)
 
 `scripts/iv_screening.py`. Rather than hand-picking candidates, every one of the ~85 non-leakage columns from `CLEANING.md` was scored with **Information Value** — the standard credit-scoring screening metric (bin the variable, compute Weight of Evidence per bin, sum `(%good - %bad) × WOE`). Conventional thresholds: IV < 0.02 not useful, 0.02–0.1 weak, 0.1–0.3 medium, 0.3–0.5 strong.

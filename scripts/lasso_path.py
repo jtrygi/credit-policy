@@ -11,6 +11,7 @@ lines with a full legend would be unreadable. Numeric features get direct
 labels; categorical block survival is reported in a companion table instead.
 """
 import json
+import os
 
 import matplotlib
 matplotlib.use("Agg")
@@ -22,6 +23,9 @@ from sklearn.metrics import brier_score_loss, roc_auc_score
 from sklearn.preprocessing import StandardScaler
 
 from metrics_extra import ks_statistic
+
+CKPT_CSV = "images/lasso_path_metrics.csv"
+COEF_NPY = "images/lasso_coef_paths.npy"
 
 HUE = "#2563EB"
 CAT_HUE = "#D1D5DB"
@@ -70,9 +74,26 @@ def main():
     y_train, y_val = train["bad"].values, val["bad"].values
 
     C_grid = np.logspace(-4, 1, 25)
-    coef_paths = []
+
+    # Incremental checkpointing + resume (same pattern as tune_ensembles.py):
+    # a killed job -- this has happened to this exact script once already,
+    # with nothing surviving -- now leaves usable partial results on disk.
+    # C_grid is deterministic (no RNG), so resuming is just "start at the
+    # next un-checkpointed index."
     metrics = []
-    for C in C_grid:
+    coef_paths = []
+    start_idx = 0
+    if os.path.exists(CKPT_CSV) and os.path.exists(COEF_NPY):
+        existing = pd.read_csv(CKPT_CSV)
+        existing_coefs = np.load(COEF_NPY)
+        if len(existing) == len(existing_coefs) and len(existing) > 0:
+            metrics = existing.to_dict("records")
+            coef_paths = [row for row in existing_coefs]
+            start_idx = len(existing)
+            print(f"Resuming at C_grid index {start_idx} ({start_idx} already checkpointed)", flush=True)
+
+    for i in range(start_idx, len(C_grid)):
+        C = C_grid[i]
         lr = LogisticRegression(penalty="l1", solver="liblinear", C=C, max_iter=1000, random_state=42)
         lr.fit(Xtr, y_train)
         coef_paths.append(lr.coef_[0].copy())
@@ -84,9 +105,11 @@ def main():
         metrics.append(dict(C=C, auc=auc, brier=brier, ks=ks, n_nonzero=n_nonzero))
         print(f"C={C:.5f}  AUC={auc:.4f}  Brier={brier:.5f}  KS={ks:.4f}  nonzero={n_nonzero}/{len(cols)}", flush=True)
 
+        pd.DataFrame(metrics).to_csv(CKPT_CSV, index=False)
+        np.save(COEF_NPY, np.array(coef_paths))
+
     coef_paths = np.array(coef_paths)  # shape (n_C, n_features)
     metrics_df = pd.DataFrame(metrics)
-    metrics_df.to_csv("images/lasso_path_metrics.csv", index=False)
 
     best_idx = metrics_df["auc"].idxmax()
     best_C = metrics_df.loc[best_idx, "C"]

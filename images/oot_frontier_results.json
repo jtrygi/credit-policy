@@ -1,0 +1,36 @@
+{
+  "baseline": {
+    "cutoff": "A-D",
+    "volume_pct": 0.9617619883164139,
+    "bad_rate": 0.14064827448084216,
+    "net_profit_per_1000": 800946.20396287
+  },
+  "lr24_pd": {
+    "equal_volume": {
+      "volume_pct": 0.9617619883164139,
+      "bad_rate": 0.14021329594812804,
+      "net_profit_per_1000": 808081.353502346,
+      "bad_rate_delta_vs_baseline": -0.00043497853271412534
+    },
+    "equal_loss_rate": {
+      "volume_pct": 0.9639680853305083,
+      "bad_rate": 0.140647977295505,
+      "net_profit_per_1000": 808143.7959836103,
+      "volume_delta_vs_baseline": 0.0022060970140943548
+    }
+  },
+  "xgb_pd": {
+    "equal_volume": {
+      "volume_pct": 0.9617619883164139,
+      "bad_rate": 0.13931204546308001,
+      "net_profit_per_1000": 815967.3355144938,
+      "bad_rate_delta_vs_baseline": -0.0013362290177621472
+    },
+    "equal_loss_rate": {
+      "volume_pct": 0.9679258173544292,
+      "bad_rate": 0.14064812626708623,
+      "net_profit_per_1000": 816119.8120104114,
+      "volume_delta_vs_baseline": 0.006163829038015267
+    }
+  }
+}
