@@ -1,0 +1,176 @@
+{
+  "safest": {
+    "predicted_pd": 0.005243152379989624,
+    "base_value": -1.689944863319397,
+    "top_risk_increasing": [
+      {
+        "feature": "bc_util",
+        "shap": 0.11032265424728394,
+        "value": 1.4
+      },
+      {
+        "feature": "num_bc_sats",
+        "shap": 0.07603506743907928,
+        "value": 11.0
+      },
+      {
+        "feature": "credit_history_months",
+        "shap": 0.035710837692022324,
+        "value": 260.0
+      },
+      {
+        "feature": "revol_bal",
+        "shap": 0.029782461002469063,
+        "value": 1821.0
+      },
+      {
+        "feature": "tot_hi_cred_lim",
+        "shap": 0.027836555615067482,
+        "value": 531651.0
+      }
+    ],
+    "top_risk_reducing": [
+      {
+        "feature": "int_rate",
+        "shap": -1.0916613340377808,
+        "value": 5.32
+      },
+      {
+        "feature": "fico_avg",
+        "shap": -0.6425774693489075,
+        "value": 842.0
+      },
+      {
+        "feature": "loan_to_income",
+        "shap": -0.2843368947505951,
+        "value": 0.0875
+      },
+      {
+        "feature": "total_rev_hi_lim",
+        "shap": -0.20067188143730164,
+        "value": 128100.0
+      },
+      {
+        "feature": "annual_inc",
+        "shap": -0.19365479052066803,
+        "value": 80000.0
+      }
+    ]
+  },
+  "riskiest": {
+    "predicted_pd": 0.5111533403396606,
+    "base_value": -1.689944863319397,
+    "top_risk_increasing": [
+      {
+        "feature": "int_rate",
+        "shap": 0.45253410935401917,
+        "value": 17.57
+      },
+      {
+        "feature": "loan_to_income",
+        "shap": 0.3116883933544159,
+        "value": 0.44
+      },
+      {
+        "feature": "total_bc_limit",
+        "shap": 0.23016232252120972,
+        "value": 500.0
+      },
+      {
+        "feature": "acc_open_past_24mths",
+        "shap": 0.17941191792488098,
+        "value": 6.0
+      },
+      {
+        "feature": "total_rev_hi_lim",
+        "shap": 0.16954341530799866,
+        "value": 4900.0
+      }
+    ],
+    "top_risk_reducing": [
+      {
+        "feature": "term_months",
+        "shap": -0.1336817741394043,
+        "value": 36.0
+      },
+      {
+        "feature": "mo_sin_rcnt_rev_tl_op",
+        "shap": -0.06528985500335693,
+        "value": 4.0
+      },
+      {
+        "feature": "percent_bc_gt_75",
+        "shap": -0.055560652166604996,
+        "value": 0.0
+      },
+      {
+        "feature": "credit_history_months",
+        "shap": -0.05468275398015976,
+        "value": 74.0
+      },
+      {
+        "feature": "revol_util",
+        "shap": -0.0406736396253109,
+        "value": 37.0
+      }
+    ]
+  },
+  "borderline": {
+    "predicted_pd": 0.09675699472427368,
+    "base_value": -1.689944863319397,
+    "top_risk_increasing": [
+      {
+        "feature": "annual_inc",
+        "shap": 0.2415643185377121,
+        "value": 35000.0
+      },
+      {
+        "feature": "inq_last_6mths",
+        "shap": 0.06909438222646713,
+        "value": 2.0
+      },
+      {
+        "feature": "bc_util",
+        "shap": 0.06227824464440346,
+        "value": 48.2
+      },
+      {
+        "feature": "fico_avg",
+        "shap": 0.05830143764615059,
+        "value": 667.0
+      },
+      {
+        "feature": "mths_since_recent_inq",
+        "shap": 0.042688630521297455,
+        "value": 0.0
+      }
+    ],
+    "top_risk_reducing": [
+      {
+        "feature": "int_rate",
+        "shap": -0.2588748633861542,
+        "value": 11.53
+      },
+      {
+        "feature": "term_months",
+        "shap": -0.1322821080684662,
+        "value": 36.0
+      },
+      {
+        "feature": "dti",
+        "shap": -0.1123197078704834,
+        "value": 6.93
+      },
+      {
+        "feature": "purpose_credit_card",
+        "shap": -0.08850729465484619,
+        "value": 1.0
+      },
+      {
+        "feature": "mths_since_recent_bc",
+        "shap": -0.088311105966568,
+        "value": 44.0
+      }
+    ]
+  }
+}
