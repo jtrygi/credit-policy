@@ -1,0 +1,28 @@
+{
+  "lr24_pd": {
+    "model": "LR-24",
+    "vol_pct": 0.9639680853305083,
+    "both_approve_n": 311785,
+    "both_decline_n": 4201,
+    "only_champion_n": 7771,
+    "only_challenger_n": 8504,
+    "disagreement_n": 16275,
+    "disagreement_pct": 0.048982576950048304,
+    "bad_rate_only_champion": 0.3277570454252992,
+    "bad_rate_only_challenger": 0.31161806208842896,
+    "n_per_arm_required": 13106.308998664257
+  },
+  "xgb_pd": {
+    "model": "XGBoost",
+    "vol_pct": 0.9679258173544292,
+    "both_approve_n": 313163,
+    "both_decline_n": 4264,
+    "only_champion_n": 6393,
+    "only_challenger_n": 8441,
+    "disagreement_n": 14834,
+    "disagreement_pct": 0.04464562497554633,
+    "bad_rate_only_champion": 0.3566400750821211,
+    "bad_rate_only_challenger": 0.30422935671129014,
+    "n_per_arm_required": 1263.1958354884846
+  }
+}
