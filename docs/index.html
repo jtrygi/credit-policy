@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Grade Cutoff vs. Model: An Interactive Look</title>
+<meta name="description" content="Interactive walkthrough of a credit risk segmentation policy: does a multi-variable model beat LendingClub's own grade cutoff, tested out-of-time?" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>" />
+<style>
+  :root {
+    --ink: #1B2430; --ink-soft: #3A4453; --paper: #F6F7F9; --paper-raised: #FFFFFF;
+    --muted: #64748B; --line: #E2E5EA;
+    --accent-lr24: #2563EB; --accent-lr24-soft: #DBEAFE;
+    --accent-xgb: #7C3AED; --accent-xgb-soft: #EDE9FE;
+    --good: #059669; --good-soft: #D1FAE5; --bad: #DC2626; --bad-soft: #FEE2E2;
+    --shadow: 0 1px 2px rgba(27,36,48,0.06), 0 4px 16px rgba(27,36,48,0.05);
+    --plot-bg: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #E7EAEF; --ink-soft: #C3CAD6; --paper: #14171C; --paper-raised: #1C2027;
+      --muted: #8A93A3; --line: #2B303A;
+      --accent-lr24: #6D9BFF; --accent-lr24-soft: #1E2A4D;
+      --accent-xgb: #B79BFF; --accent-xgb-soft: #2C1F4D;
+      --good: #34D399; --good-soft: #0E2B22; --bad: #F87171; --bad-soft: #3A1414;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.35);
+      --plot-bg: #1C2027;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, sans-serif;
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .mono, .num { font-family: Consolas, "SF Mono", "Cascadia Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  h1, h2, h3 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-weight: 600; text-wrap: balance; color: var(--ink); }
+  h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.15; margin: 0 0 0.4em; }
+  h2 { font-size: 1.5rem; margin: 0 0 0.5em; }
+  h3 { font-size: 1.1rem; margin: 0 0 0.4em; }
+  p { margin: 0 0 1em; color: var(--ink-soft); }
+  a { color: var(--accent-lr24); }
+  .eyebrow { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 0.6em; display: block; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 3.2rem 1.5rem; }
+  .wide { max-width: 1080px; }
+  header.masthead { border-bottom: 1px solid var(--line); }
+  header.masthead .wrap { padding-bottom: 2.4rem; }
+  .headline-stat { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1.6rem; padding: 1.4rem 1.6rem; background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+  .headline-stat .figure { flex: 1; min-width: 200px; }
+  .headline-stat .figure .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3em; }
+  .headline-stat .figure .value { font-size: 1.6rem; font-weight: 700; font-family: Georgia, serif; }
+  .headline-stat .figure.real .value { color: var(--good); }
+  .headline-stat .figure.naive .value { color: var(--bad); text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: var(--bad); opacity: 0.75; }
+  section { padding: 2.6rem 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+  figure { margin: 1.4rem 0; }
+  figure img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); display: block; }
+  figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.6em; }
+  .callout { background: var(--paper-raised); border: 1px solid var(--line); border-left: 3px solid var(--accent-xgb); border-radius: 6px; padding: 1rem 1.2rem; margin: 1.2em 0; font-size: 0.95rem; }
+  .callout p:last-child { margin-bottom: 0; }
+  .doc-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  .doc-links a { font-size: 0.82rem; padding: 0.3rem 0.7rem; border: 1px solid var(--line); border-radius: 999px; text-decoration: none; color: var(--ink-soft); background: var(--paper-raised); }
+  .plot-box { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem; margin: 1.2rem 0; }
+  .plot-box h3 { font-size: 0.9rem; font-family: inherit; font-weight: 700; }
+  .explorer { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 1.6rem; }
+  .filters { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); margin-bottom: 1.2rem; }
+  .field { display: flex; flex-direction: column; gap: 0.35rem; min-width: 140px; }
+  .field label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+  .field select, .field input[type="range"] { font: inherit; padding: 0.4rem 0.5rem; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+  .field select:focus, .field input:focus, button:focus { outline: 2px solid var(--accent-lr24); outline-offset: 1px; }
+  .model-toggle { display: flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  .model-toggle button { font: inherit; font-size: 0.85rem; padding: 0.42rem 0.9rem; border: none; background: var(--paper-raised); color: var(--ink-soft); cursor: pointer; }
+  .model-toggle button.active[data-m="lr24"] { background: var(--accent-lr24-soft); color: var(--accent-lr24); font-weight: 700; }
+  .model-toggle button.active[data-m="xgb"] { background: var(--accent-xgb-soft); color: var(--accent-xgb); font-weight: 700; }
+  .range-field { min-width: 220px; }
+  .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin-bottom: 1.4rem; }
+  .stat-card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 0.8rem 1rem; }
+  .stat-card .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3em; }
+  .stat-card .value { font-size: 1.35rem; font-weight: 700; }
+  .small-n-warning { display: none; align-items: center; gap: 0.5rem; background: var(--bad-soft); color: var(--bad); border-radius: 6px; padding: 0.55rem 0.8rem; font-size: 0.85rem; margin-bottom: 1rem; font-weight: 600; }
+  .small-n-warning.show { display: flex; }
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.4rem; }
+  @media (max-width: 700px) { .charts-row { grid-template-columns: 1fr; } }
+  .chart-box { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem; }
+  .chart-box h3 { font-size: 0.9rem; font-family: inherit; font-weight: 700; margin-bottom: 0.6em; }
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+  table.applicants { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 0.85rem; }
+  table.applicants th { text-align: left; padding: 0.55rem 0.7rem; background: var(--paper); color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--line); position: sticky; top: 0; }
+  table.applicants td { padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.applicants tbody tr:hover { background: var(--paper); cursor: pointer; }
+  .chip { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+  .chip.good { background: var(--good-soft); color: var(--good); }
+  .chip.bad { background: var(--bad-soft); color: var(--bad); }
+  .grade-chip { font-weight: 700; font-family: Georgia, serif; }
+  .reasons-row td { background: var(--paper); padding: 0.8rem; }
+  .reasons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .reasons-col .title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin-bottom: 0.4em; }
+  .reasons-col.up .title { color: var(--bad); }
+  .reasons-col.down .title { color: var(--good); }
+  .reason-item { display: flex; justify-content: space-between; padding: 0.2rem 0; font-size: 0.82rem; }
+  .table-note { font-size: 0.8rem; color: var(--muted); margin-top: 0.7rem; }
+  .loading { padding: 3rem; text-align: center; color: var(--muted); }
+  footer { padding: 2.4rem 0 3.5rem; }
+  footer p { font-size: 0.85rem; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <span class="eyebrow">Credit Risk Policy &middot; Interactive Model Explorer</span>
+    <h1>Does a richer model beat LendingClub's own grade cutoff?</h1>
+    <p>LendingClub sorts applicants into 7 risk grades &mdash; a single score, coarsely bucketed &mdash; and approves everyone above a cutoff. This page walks through whether a model built from 24&ndash;247 variables ranks default risk better than that one score, tested the honest way: on loans originated <em>after</em> everything the model ever trained on.</p>
+    <div class="headline-stat">
+      <div class="figure real">
+        <div class="label">Real, out-of-time edge</div>
+        <div class="value num">$7K&ndash;$15K <span style="font-size:0.6em;font-weight:500;color:var(--muted);">/ 1,000 applicants</span></div>
+      </div>
+      <div class="figure naive">
+        <div class="label">What a same-era test would have claimed</div>
+        <div class="value num">$38K&ndash;$96K <span style="font-size:0.6em;font-weight:500;color:var(--muted);text-decoration:none;">/ 1,000 applicants</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="question">
+    <div class="wrap">
+      <h2>The question, precisely</h2>
+      <p>Two candidate policies were built to replace grade-only bucketing: <strong style="color:var(--accent-lr24)">LR-24</strong>, a 24-feature logistic regression a credit committee can review line by line, and <strong style="color:var(--accent-xgb)">XGBoost</strong>, a 247-feature ensemble with materially better discrimination but a harder governance story. Both were scored against a grade-A&ndash;D baseline &mdash; LendingClub's own current-practice proxy &mdash; on two axes: at the <em>same approval volume</em>, does the model find a lower default rate? At the <em>same default rate</em>, does it approve more volume?</p>
+      <p>The answer to both is yes, for both models &mdash; but by how much depends entirely on how you evaluate it, which is the actual headline finding here.</p>
+    </div>
+  </section>
+
+  <section id="methodology">
+    <div class="wrap">
+      <h2>The methodology matters more than the model</h2>
+      <p>Every model in this project was first evaluated on a <strong>random</strong> train/validation/test split &mdash; loans from every origination year scattered across all three. That tests generalization to held-out <em>loans</em>, never to a held-out <em>time period</em>. A live deployment doesn't get that luxury: it trains on history and predicts into a future it hasn't seen.</p>
+      <p>Rebuilding the entire comparison on a <strong>chronological</strong> split &mdash; train through 2013, validate on 2014, test purely on 2015&ndash;2016 &mdash; changes the conclusion's magnitude substantially, though not its direction.</p>
+      <figure>
+        <img src="methodology_comparison.png" alt="Grouped bar chart comparing net profit improvement over baseline under a random split versus an out-of-time split, for both LR-24 and XGBoost, at equal volume and equal loss rate." loading="lazy" />
+        <figcaption>Every bar shrinks 5&ndash;8x moving from a same-era holdout to a genuinely out-of-time test &mdash; and stays positive. The edge is real; the random-split estimate of its size was not.</figcaption>
+      </figure>
+      <div class="callout">
+        <p><strong>Why the shrinkage is real, not a bug:</strong> the out-of-time test population's own baseline already sits at 96.2% approval (vs. 93.3% on the random split) &mdash; underwriting mix shifted over the years covered &mdash; leaving mechanically less room for any model to reorder anyone. Discrimination itself barely moved (AUC &minus;0.001 for LR-24, &minus;0.009 for XGBoost); the composition of the test population did the rest.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="frontier">
+    <div class="wrap">
+      <h2>What "beating the baseline" looks like on unseen data</h2>
+      <p>Sorting applicants by predicted risk instead of by grade and sweeping the approval threshold traces a full frontier, not just one number. On the 2015&ndash;2016 test vintages &mdash; loans no model here ever trained on &mdash; both candidate models sit consistently below the baseline on loss rate and above it on profit, across the whole range.</p>
+      <figure>
+        <img src="oot_frontier_comparison.png" alt="Line chart showing loss rate and profit versus approval volume for the baseline grade cutoff, LR-24, and XGBoost, on the out-of-time test set." loading="lazy" />
+        <figcaption>Out-of-time test (2015&ndash;2016 vintages). XGBoost (purple) leads LR-24 (blue) on both axes; both lead the grade-only baseline (dashed grey).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="stress">
+    <div class="wrap">
+      <h2>Does the edge survive a bad year?</h2>
+      <p>Stress-tested against a severity shock (losses run 20% hotter per charged-off loan) and a macro shock sized from this project's own data &mdash; LendingClub's actual 2008 crisis-vintage bad rate was 20.7% against a 14.85% baseline, used here instead of a guessed downturn size. Absolute profit collapses under stress, for everyone, baseline included &mdash; that's expected. The question is whether the <em>edge</em> collapses with it.</p>
+      <figure>
+        <img src="stress_test_delta.png" alt="Bar chart showing the profit improvement of LR-24 and XGBoost over baseline across four scenarios: base case, severity shock, macro shock, and combined." loading="lazy" />
+        <figcaption>It doesn't. XGBoost's edge stays in an $11K&ndash;$15K band across every scenario; LR-24's actually grows slightly under stress.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="explainability">
+    <div class="wrap">
+      <h2>Explaining one decision, not just the whole model</h2>
+      <p>A common objection to XGBoost is that it's a black box &mdash; but the actual regulatory bar (ECOA/Reg B) is narrower than full transparency: a declined applicant is owed <em>specific reasons</em>, not a shrug. TreeSHAP decomposes any individual prediction into exact per-feature contributions, giving a real, auditable reason list for any applicant. Every direction below matches domain intuition &mdash; higher interest rate and loan-to-income raise predicted risk, higher FICO and income lower it &mdash; which matters for conceptual soundness, not just adverse-action paperwork.</p>
+      <figure>
+        <img src="shap_summary.png" alt="SHAP beeswarm summary plot showing the distribution and direction of feature contributions across applicants, ranked by importance." loading="lazy" />
+        <figcaption>Global feature impact, XGBoost (out-of-time model), 5,000-applicant sample. Explore individual applicants below.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="explore" class="wide">
+    <div class="wrap wide">
+      <h2>Explore the applicants yourself</h2>
+      <p>A 5,000-applicant sample of the out-of-time test set (2015&ndash;2016 vintages, never trained on). Filter by score, grade, or loan purpose; switch between models; click any row for its SHAP reason codes.</p>
+
+      <div class="explorer">
+        <div class="filters">
+          <div class="field">
+            <label>Model</label>
+            <div class="model-toggle" id="modelToggle">
+              <button data-m="xgb" class="active" type="button">XGBoost</button>
+              <button data-m="lr24" type="button">LR-24</button>
+            </div>
+          </div>
+          <div class="field range-field">
+            <label>Predicted default risk <span id="pdRangeLabel" class="num">0%&ndash;100%</span></label>
+            <input type="range" id="pdMin" min="0" max="100" value="0" step="1" />
+            <input type="range" id="pdMax" min="0" max="100" value="100" step="1" />
+          </div>
+          <div class="field"><label>Grade</label><select id="gradeFilter"><option value="ALL">All grades</option></select></div>
+          <div class="field"><label>Purpose</label><select id="purposeFilter"><option value="ALL">All purposes</option></select></div>
+          <div class="field">
+            <label>Outcome</label>
+            <select id="outcomeFilter">
+              <option value="ALL">All outcomes</option>
+              <option value="0">Fully paid</option>
+              <option value="1">Charged off</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="small-n-warning" id="smallNWarning">&#9888; Small sample (n &lt; 30) &mdash; these figures are noisy, interpret with caution.</div>
+        <div class="stat-cards" id="statCards"></div>
+
+        <div class="charts-row">
+          <div class="chart-box"><h3>Score distribution</h3><div id="histChart"></div></div>
+          <div class="chart-box"><h3>Calibration (predicted vs. actual, by decile)</h3><div id="calChart"></div></div>
+        </div>
+
+        <div class="table-scroll">
+          <table class="applicants">
+            <thead><tr><th>Grade</th><th>Predicted PD</th><th>Outcome</th><th>Net $</th><th>Int. rate</th><th>DTI</th><th>FICO</th><th>Purpose</th></tr></thead>
+            <tbody id="applicantRows"></tbody>
+          </table>
+        </div>
+        <p class="table-note" id="tableNote"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="validation" class="wide">
+    <div class="wrap wide">
+      <h2>How you'd actually prove this in production</h2>
+      <p>Everything above is retrospective. A proposed champion/challenger test randomizes only the region where the model and baseline actually disagree &mdash; where both already agree, there's nothing to learn from randomizing, and doing so only dilutes the read.</p>
+      <div class="plot-box"><div id="disagreementChart"></div></div>
+      <p class="table-note">XGBoost and baseline agree on 95.5% of applicants. The 4.5% disagreement region is the only slice a live test needs to touch &mdash; and its outcomes are far better risk-separated (35.7% vs. 30.4% bad rate) than LR-24's equivalent split, meaning XGBoost's edge is roughly 10x faster to prove statistically.</p>
+    </div>
+  </section>
+
+  <section id="monitoring" class="wide">
+    <div class="wrap wide">
+      <h2>What drift would look like</h2>
+      <p>The full 2007&ndash;2016 origination history, not the 5,000-row sample above &mdash; a preview of the vintage-tracking view a real monitoring dashboard would run continuously. 2007&ndash;2008 are LendingClub's own financial-crisis vintages; everything after settles into a stable band, which is exactly the kind of pattern a monitoring view exists to catch if it stops holding.</p>
+      <div class="plot-box"><div id="vintageChart"></div></div>
+    </div>
+  </section>
+
+  <section id="reading">
+    <div class="wrap">
+      <h2>Further reading</h2>
+      <p>This page summarizes ten linked documents in the project repository, each with full methodology, code, and numbers:</p>
+      <div class="doc-links">
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/SCOPING.md">SCOPING.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/CLEANING.md">CLEANING.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/MODELING.md">MODELING.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/FEATURE_SELECTION.md">FEATURE_SELECTION.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/SEGMENTATION_POLICY.md">SEGMENTATION_POLICY.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/OOT_VALIDATION.md">OOT_VALIDATION.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/STEP8_BUSINESS_CASE.md">STEP8_BUSINESS_CASE.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/SHAP_EXPLAINABILITY.md">SHAP_EXPLAINABILITY.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/STEP9_VALIDATION_TEST.md">STEP9_VALIDATION_TEST.md</a>
+        <a href="https://github.com/jtrygi/credit-policy/blob/main/MONITORING_PLAN.md">MONITORING_PLAN.md</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Data: LendingClub accepted loans, 2007&ndash;2016 originations, scoped to individual personal installment loans with resolved outcomes. Row-level explorer above is a fixed 5,000-applicant random sample (seed 42) of the out-of-time test set. Vintage panel uses the full scoped population. No cost of funds, behavioral response, or fair-lending/disparate-impact adjustment is modeled &mdash; see STEP8_BUSINESS_CASE.md and the project's fair-lending data-availability discussion for why.</p>
+  </div>
+</footer>
+
+<script src="plotly.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function plotlyTheme() {
+    return {
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "rgba(0,0,0,0)",
+      font: { color: cssVar("--muted"), size: 11, family: "-apple-system, Segoe UI, system-ui, sans-serif" },
+      margin: { l: 44, r: 16, t: 10, b: 36 },
+    };
+  }
+  var PLOTLY_CONFIG = { displayModeBar: false, responsive: true };
+
+  var state = { model: "xgb", pdMin: 0, pdMax: 100, grade: "ALL", purpose: "ALL", outcome: "ALL" };
+  var ROWS = [], VINTAGES = [];
+
+  function fmtPct(x) { return (x * 100).toFixed(1) + "%"; }
+  function fmtMoney(x) { var sign = x < 0 ? "-" : ""; return sign + "$" + Math.abs(Math.round(x)).toLocaleString(); }
+  function pdKey() { return state.model === "xgb" ? "xgb_pd" : "lr24_pd"; }
+  function featureLabel(f) { return f.replace(/_/g, " "); }
+
+  function filteredRows() {
+    var key = pdKey(), lo = state.pdMin / 100, hi = state.pdMax / 100;
+    return ROWS.filter(function (r) {
+      if (r[key] < lo || r[key] > hi) return false;
+      if (state.grade !== "ALL" && r.grade !== state.grade) return false;
+      if (state.purpose !== "ALL" && r.purpose !== state.purpose) return false;
+      if (state.outcome !== "ALL" && String(r.bad) !== state.outcome) return false;
+      return true;
+    });
+  }
+
+  function renderStats(rows) {
+    var n = rows.length;
+    var badN = rows.filter(function (r) { return r.bad === 1; }).length;
+    var avgPd = n ? rows.reduce(function (s, r) { return s + r[pdKey()]; }, 0) / n : 0;
+    var avgNet = n ? rows.reduce(function (s, r) { return s + r.net_realized; }, 0) / n : 0;
+    document.getElementById("smallNWarning").classList.toggle("show", n > 0 && n < 30);
+    var cards = [
+      { label: "Applicants", value: n.toLocaleString() },
+      { label: "Bad rate", value: n ? fmtPct(badN / n) : "—" },
+      { label: "Avg. predicted PD", value: n ? fmtPct(avgPd) : "—" },
+      { label: "Avg. realized $/loan", value: n ? fmtMoney(avgNet) : "—" },
+    ];
+    var container = document.getElementById("statCards");
+    container.innerHTML = "";
+    cards.forEach(function (c) {
+      var div = document.createElement("div");
+      div.className = "stat-card";
+      div.innerHTML = '<div class="label">' + c.label + '</div><div class="value num">' + c.value + "</div>";
+      container.appendChild(div);
+    });
+  }
+
+  function renderHistogram(rows) {
+    var key = pdKey();
+    var good = rows.filter(function (r) { return !r.bad; }).map(function (r) { return r[key] * 100; });
+    var bad = rows.filter(function (r) { return r.bad; }).map(function (r) { return r[key] * 100; });
+    var theme = plotlyTheme();
+    var traces = [
+      { x: good, type: "histogram", name: "Fully paid", marker: { color: cssVar("--good") }, opacity: 0.75, xbins: { start: 0, end: 90, size: 5 } },
+      { x: bad, type: "histogram", name: "Charged off", marker: { color: cssVar("--bad") }, opacity: 0.85, xbins: { start: 0, end: 90, size: 5 } },
+    ];
+    var layout = Object.assign({}, theme, {
+      barmode: "stack", height: 240,
+      xaxis: { title: { text: "Predicted PD (%)", font: { size: 10 } }, gridcolor: cssVar("--line") },
+      yaxis: { title: { text: "Applicants", font: { size: 10 } }, gridcolor: cssVar("--line") },
+      legend: { orientation: "h", y: -0.25, font: { size: 10 } },
+    });
+    if (rows.length === 0) {
+      layout.annotations = [{ text: "No applicants match these filters", showarrow: false, font: { color: cssVar("--muted"), size: 12 }, x: 0.5, y: 0.5, xref: "paper", yref: "paper" }];
+    }
+    Plotly.react("histChart", traces, layout, PLOTLY_CONFIG);
+  }
+
+  function renderCalibration(rows) {
+    var key = pdKey();
+    var sorted = rows.slice().sort(function (a, b) { return a[key] - b[key]; });
+    var minPerBin = 15, nBinsTarget = 6;
+    var nbins = Math.max(1, Math.min(nBinsTarget, Math.floor(sorted.length / minPerBin)));
+    var pts = [];
+    if (sorted.length > 0) {
+      var size = Math.ceil(sorted.length / nbins);
+      for (var i = 0; i < sorted.length; i += size) {
+        var chunk = sorted.slice(i, i + size);
+        var n = chunk.length;
+        var predAvg = chunk.reduce(function (s, r) { return s + r[key]; }, 0) / n;
+        var actAvg = chunk.reduce(function (s, r) { return s + r.bad; }, 0) / n;
+        pts.push({ pred: predAvg * 100, act: actAvg * 100, n: n });
+      }
+    }
+    var theme = plotlyTheme();
+    var maxV = Math.max(20, Math.max.apply(null, pts.map(function (p) { return Math.max(p.pred, p.act); }).concat([20]))) * 1.15;
+    var traces = [
+      { x: [0, maxV], y: [0, maxV], type: "scatter", mode: "lines", line: { color: cssVar("--muted"), dash: "dot", width: 1 }, name: "Perfect calibration", hoverinfo: "skip" },
+      {
+        x: pts.map(function (p) { return p.pred; }), y: pts.map(function (p) { return p.act; }),
+        type: "scatter", mode: "lines+markers", name: "This selection",
+        line: { color: cssVar("--accent-xgb"), width: 2 },
+        marker: { color: cssVar("--accent-xgb"), size: pts.map(function (p) { return Math.max(6, Math.min(18, Math.sqrt(p.n) * 1.6)); }) },
+        text: pts.map(function (p) { return "n=" + p.n; }), hovertemplate: "Predicted %{x:.1f}%<br>Actual %{y:.1f}%<br>%{text}<extra></extra>",
+      },
+    ];
+    var layout = Object.assign({}, theme, {
+      height: 240, showlegend: false,
+      xaxis: { title: { text: "Predicted PD (%)", font: { size: 10 } }, range: [0, maxV], gridcolor: cssVar("--line") },
+      yaxis: { title: { text: "Actual bad rate (%)", font: { size: 10 } }, range: [0, maxV], gridcolor: cssVar("--line") },
+    });
+    if (pts.length === 0) {
+      layout.annotations = [{ text: "No applicants match these filters", showarrow: false, font: { color: cssVar("--muted"), size: 12 }, x: 0.5, y: 0.5, xref: "paper", yref: "paper" }];
+    }
+    Plotly.react("calChart", traces, layout, PLOTLY_CONFIG);
+  }
+
+  function renderTable(rows) {
+    var tbody = document.getElementById("applicantRows");
+    tbody.innerHTML = "";
+    var key = pdKey();
+    if (rows.length === 0) {
+      var emptyTr = document.createElement("tr");
+      var emptyTd = document.createElement("td");
+      emptyTd.colSpan = 8;
+      emptyTd.style.textAlign = "center";
+      emptyTd.style.color = "var(--muted)";
+      emptyTd.style.padding = "1.6rem";
+      emptyTd.textContent = "No applicants match these filters — try widening the risk range or clearing a filter.";
+      emptyTr.appendChild(emptyTd);
+      tbody.appendChild(emptyTr);
+      document.getElementById("tableNote").textContent = "Showing 0 of 0 matching applicants.";
+      return;
+    }
+    var shown = rows.slice().sort(function (a, b) { return b[key] - a[key]; }).slice(0, 250);
+    shown.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="grade-chip">' + r.grade + "</td>" +
+        '<td class="num">' + fmtPct(r[key]) + "</td>" +
+        '<td><span class="chip ' + (r.bad ? "bad" : "good") + '">' + (r.bad ? "Charged off" : "Fully paid") + "</span></td>" +
+        '<td class="num">' + fmtMoney(r.net_realized) + "</td>" +
+        '<td class="num">' + r.int_rate.toFixed(2) + "%</td>" +
+        '<td class="num">' + r.dti.toFixed(1) + "</td>" +
+        '<td class="num">' + Math.round(r.fico_avg) + "</td>" +
+        "<td>" + featureLabel(r.purpose) + "</td>";
+      tr.addEventListener("click", function () { toggleReasons(tr, r); });
+      tbody.appendChild(tr);
+    });
+    document.getElementById("tableNote").textContent =
+      "Showing " + shown.length.toLocaleString() + " of " + rows.length.toLocaleString() +
+      " matching applicants (sorted by predicted PD, highest first). Click a row for its SHAP reason codes.";
+  }
+
+  function toggleReasons(tr, r) {
+    var next = tr.nextSibling;
+    if (next && next.classList && next.classList.contains("reasons-row")) { next.remove(); return; }
+    document.querySelectorAll(".reasons-row").forEach(function (el) { el.remove(); });
+    var row = document.createElement("tr");
+    row.className = "reasons-row";
+    var td = document.createElement("td");
+    td.colSpan = 8;
+    function list(items) {
+      return items.map(function (it) {
+        return '<div class="reason-item"><span>' + featureLabel(it.f) + '</span><span class="num">' + (it.v > 0 ? "+" : "") + it.v.toFixed(3) + "</span></div>";
+      }).join("");
+    }
+    td.innerHTML =
+      '<div class="reasons-grid">' +
+      '<div class="reasons-col up"><div class="title">Increases predicted risk</div>' + list(r.reasons_up) + "</div>" +
+      '<div class="reasons-col down"><div class="title">Reduces predicted risk</div>' + list(r.reasons_down) + "</div>" +
+      "</div>" +
+      '<p class="table-note" style="margin-top:0.7rem;margin-bottom:0;">XGBoost SHAP values (out-of-time model) &mdash; the exact per-feature contributions to this applicant\'s score.</p>';
+    row.appendChild(td);
+    tr.parentNode.insertBefore(row, tr.nextSibling);
+  }
+
+  function renderVintage() {
+    var theme = plotlyTheme();
+    var colors = VINTAGES.map(function (v) { return (v.year === 2007 || v.year === 2008) ? cssVar("--bad") : cssVar("--accent-xgb"); });
+    var trace = {
+      x: VINTAGES.map(function (v) { return v.year; }),
+      y: VINTAGES.map(function (v) { return v.bad_rate * 100; }),
+      type: "bar", marker: { color: colors },
+      text: VINTAGES.map(function (v) { return "n=" + v.n.toLocaleString(); }),
+      hovertemplate: "%{x}: %{y:.1f}%<br>%{text}<extra></extra>",
+    };
+    var layout = Object.assign({}, theme, {
+      height: 260,
+      xaxis: { title: { text: "Origination year", font: { size: 10 } }, type: "category" },
+      yaxis: { title: { text: "Bad rate (%)", font: { size: 10 } }, gridcolor: cssVar("--line") },
+    });
+    Plotly.newPlot("vintageChart", [trace], layout, PLOTLY_CONFIG);
+  }
+
+  function renderDisagreement() {
+    var theme = plotlyTheme();
+    var cats = ["Both approve\n(no test needed)", "Both decline\n(no test needed)", "Champion approves,\nchallenger declines", "Champion declines,\nchallenger approves"];
+    var vals = [313163, 4264, 6393, 8441];
+    var texts = ["n=313,163", "n=4,264", "n=6,393\nbad rate=35.7%", "n=8,441\nbad rate=30.4%"];
+    var colors = [cssVar("--muted"), cssVar("--muted"), cssVar("--bad"), cssVar("--good")];
+    var trace = { x: cats, y: vals, type: "bar", marker: { color: colors, opacity: [0.35, 0.35, 0.85, 0.85] }, text: texts, textposition: "outside", hoverinfo: "text" };
+    var layout = Object.assign({}, theme, {
+      height: 300, margin: { l: 50, r: 16, t: 20, b: 70 },
+      yaxis: { title: { text: "Applicants (OOT test population)", font: { size: 10 } }, gridcolor: cssVar("--line") },
+    });
+    Plotly.newPlot("disagreementChart", [trace], layout, PLOTLY_CONFIG);
+  }
+
+  function update() {
+    var rows = filteredRows();
+    renderStats(rows);
+    renderHistogram(rows);
+    renderCalibration(rows);
+    renderTable(rows);
+  }
+
+  function uniqueSorted(key) { var s = {}; ROWS.forEach(function (r) { s[r[key]] = true; }); return Object.keys(s).sort(); }
+  function populateSelect(id, values, labelFn) {
+    var el = document.getElementById(id);
+    values.forEach(function (v) {
+      var opt = document.createElement("option");
+      opt.value = v; opt.textContent = labelFn ? labelFn(v) : v;
+      el.appendChild(opt);
+    });
+  }
+
+  function init() {
+    populateSelect("gradeFilter", uniqueSorted("grade"));
+    populateSelect("purposeFilter", uniqueSorted("purpose"), function (v) {
+      return v.replace(/_/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    });
+    document.getElementById("modelToggle").addEventListener("click", function (e) {
+      var btn = e.target.closest("button");
+      if (!btn) return;
+      state.model = btn.dataset.m;
+      document.querySelectorAll("#modelToggle button").forEach(function (b) { b.classList.toggle("active", b === btn); });
+      update();
+    });
+    ["pdMin", "pdMax"].forEach(function (id) {
+      document.getElementById(id).addEventListener("input", function () {
+        var lo = +document.getElementById("pdMin").value, hi = +document.getElementById("pdMax").value;
+        if (lo > hi) { var t = lo; lo = hi; hi = t; }
+        state.pdMin = lo; state.pdMax = hi;
+        document.getElementById("pdRangeLabel").textContent = lo + "%–" + hi + "%";
+        update();
+      });
+    });
+    document.getElementById("gradeFilter").addEventListener("change", function (e) { state.grade = e.target.value; update(); });
+    document.getElementById("purposeFilter").addEventListener("change", function (e) { state.purpose = e.target.value; update(); });
+    document.getElementById("outcomeFilter").addEventListener("change", function (e) { state.outcome = e.target.value; update(); });
+
+    update();
+    renderVintage();
+    renderDisagreement();
+  }
+
+  fetch("explorer_data.json")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      ROWS = data.rows; VINTAGES = data.vintages;
+      init();
+    })
+    .catch(function (err) {
+      document.getElementById("statCards").innerHTML = '<p style="color:var(--bad)">Could not load explorer_data.json: ' + err + "</p>";
+    });
+})();
+</script>
+</body>
+</html>
