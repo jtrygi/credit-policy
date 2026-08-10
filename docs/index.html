@@ -24,6 +24,7 @@
     line-height: 1.55; -webkit-font-smoothing: antialiased;
   }
   .mono, .num { font-family: Consolas, "SF Mono", "Cascadia Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  code { font-family: Consolas, "SF Mono", "Cascadia Mono", ui-monospace, monospace; font-size: 0.9em; background: var(--paper); padding: 0.1em 0.35em; border-radius: 4px; border: 1px solid var(--line); }
   h1, h2, h3 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-weight: 600; text-wrap: balance; color: var(--ink); }
   h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.15; margin: 0 0 0.4em; }
   h2 { font-size: 1.5rem; margin: 0 0 0.5em; }
@@ -35,6 +36,23 @@
   .wide { max-width: 1080px; }
   header.masthead { border-bottom: 1px solid var(--line); }
   header.masthead .wrap { padding-bottom: 2.4rem; }
+
+  .toc-sidebar { display: none; }
+  @media (min-width: 1440px) {
+    .toc-sidebar {
+      display: block; position: fixed; top: 5rem; left: 20px; width: 168px;
+      max-height: calc(100vh - 7rem); overflow-y: auto;
+    }
+    .toc-sidebar .toc-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; margin-bottom: 0.6em; }
+    .toc-sidebar ul { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
+    .toc-sidebar li { margin: 0; }
+    .toc-sidebar a {
+      display: block; padding: 0.32rem 0 0.32rem 0.7rem; margin-left: -2px; border-left: 2px solid transparent;
+      font-size: 0.82rem; color: var(--muted); text-decoration: none; line-height: 1.3;
+    }
+    .toc-sidebar a:hover { color: var(--ink); }
+    .toc-sidebar a.active { color: var(--accent-xgb); border-left-color: var(--accent-xgb); font-weight: 700; }
+  }
   .headline-stat { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1.6rem; padding: 1.4rem 1.6rem; background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
   .headline-stat .figure { flex: 1; min-width: 200px; }
   .headline-stat .figure .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3em; }
@@ -50,6 +68,16 @@
   .callout p:last-child { margin-bottom: 0; }
   .doc-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
   .doc-links a { font-size: 0.82rem; padding: 0.3rem 0.7rem; border: 1px solid var(--line); border-radius: 999px; text-decoration: none; color: var(--ink-soft); background: var(--paper-raised); }
+  .decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.4rem; }
+  .decision-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.1rem; }
+  .decision-card h3 { font-family: inherit; font-size: 0.92rem; font-weight: 700; margin-bottom: 0.4em; }
+  .decision-card p { font-size: 0.87rem; margin-bottom: 0; }
+  .decision-card .doc-ref { display: inline-block; margin-top: 0.5em; font-size: 0.75rem; color: var(--muted); }
+  .decision-card .doc-ref code { font-size: 0.75rem; }
+  .dependence-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.9rem; margin: 1.2rem 0; }
+  .dependence-gallery figure { margin: 0; }
+  .dependence-gallery img { border-radius: 6px; }
+  .dependence-gallery figcaption { font-size: 0.78rem; text-align: center; }
   .plot-box { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem; margin: 1.2rem 0; }
   .plot-box h3 { font-size: 0.9rem; font-family: inherit; font-weight: 700; }
   .explorer { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 1.6rem; }
@@ -121,6 +149,23 @@
 </head>
 <body>
 
+<nav class="toc-sidebar" id="tocSidebar" aria-label="Table of contents">
+  <div class="toc-label">On this page</div>
+  <ul>
+    <li><a href="#impact" data-toc="impact">Business impact</a></li>
+    <li><a href="#question" data-toc="question">The question</a></li>
+    <li><a href="#methodology" data-toc="methodology">Methodology</a></li>
+    <li><a href="#frontier" data-toc="frontier">Beating the baseline</a></li>
+    <li><a href="#explore" data-toc="explore">Explore the data</a></li>
+    <li><a href="#stress" data-toc="stress">Stress test</a></li>
+    <li><a href="#explainability" data-toc="explainability">Explainability</a></li>
+    <li><a href="#decisions" data-toc="decisions">Decision points</a></li>
+    <li><a href="#validation" data-toc="validation">Validation test</a></li>
+    <li><a href="#monitoring" data-toc="monitoring">Monitoring</a></li>
+    <li><a href="#reading" data-toc="reading">Further reading</a></li>
+  </ul>
+</nav>
+
 <header class="masthead">
   <div class="wrap">
     <span class="eyebrow">Credit Risk Policy &middot; Interactive Model Explorer</span>
@@ -135,11 +180,58 @@
       <h2>Net business impact vs. the baseline</h2>
       <p>Out-of-time test set (2015&ndash;2016 vintages), at each policy's equal-loss-rate operating point &mdash; same risk tolerance as today, more approved volume.</p>
       <div class="model-toggle" id="impactToggle" style="margin-bottom:1rem;">
-        <button data-v="total" class="active" type="button">Total (this test population, n=332,261)</button>
-        <button data-v="per1000" type="button">Per 1,000 applicants</button>
+        <button data-v="per1000" class="active" type="button">Per 1,000 applicants (outperformance by bucket)</button>
+        <button data-v="total" type="button">Total (this test population, n=332,261)</button>
       </div>
       <div class="plot-box"><div id="impactChart"></div></div>
-      <p class="table-note">"Total" is what these numbers add up to across the actual OOT test population &mdash; a real dollar figure, not a forecast of any institution's real annual volume. "Per 1,000" is the portable, scale-independent version used everywhere else in this project. Full stress-testing and methodology behind both is further down this page, and in <code>STEP8_BUSINESS_CASE.md</code>.</p>
+      <div class="callout">
+        <p><strong>Keep the scale in view:</strong> XGBoost's edge is worth about $5.0M applied to this test population &mdash; real money, worth having &mdash; but it's a <strong>1.9% lift</strong> over baseline's $266.1M, not a transformation. LR-24's is $2.4M, a <strong>0.9% lift</strong>. This is a game played for basis points on a large book, not a discovery that grade-only underwriting was badly broken.</p>
+      </div>
+      <p class="table-note">"Per 1,000" is the portable, scale-independent figure used everywhere else in this project (design doc Section 4). "Total" is what it adds up to across the actual OOT test population &mdash; a real dollar figure, not a forecast of any institution's real annual volume. Full stress-testing and methodology behind both is further down this page, and in <code>STEP8_BUSINESS_CASE.md</code>.</p>
+    </div>
+  </section>
+
+  <section id="question">
+    <div class="wrap">
+      <h2>The question, precisely</h2>
+      <p>Two candidate policies were built to replace grade-only bucketing: <strong style="color:var(--accent-lr24)">LR-24</strong>, a 24-feature logistic regression a credit committee can review line by line, and <strong style="color:var(--accent-xgb)">XGBoost</strong>, a 247-feature ensemble with materially better discrimination but a harder governance story. Both were scored against a grade-A&ndash;D baseline &mdash; LendingClub's own current-practice proxy &mdash; on two axes: at the <em>same approval volume</em>, does the model find a lower default rate? At the <em>same default rate</em>, does it approve more volume?</p>
+      <p>The answer to both is yes, for both models &mdash; but by how much depends entirely on how you evaluate it, which is the actual headline finding covered next.</p>
+      <div class="headline-stat">
+        <div class="figure real">
+          <div class="label">Real, out-of-time edge</div>
+          <div class="value num">$7K&ndash;$15K <span style="font-size:0.6em;font-weight:500;color:var(--muted);">/ 1,000 applicants</span></div>
+        </div>
+        <div class="figure naive">
+          <div class="label">What a same-era test would have claimed</div>
+          <div class="value num">$38K&ndash;$96K <span style="font-size:0.6em;font-weight:500;color:var(--muted);text-decoration:none;">/ 1,000 applicants</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="methodology">
+    <div class="wrap">
+      <h2>The methodology matters more than the model</h2>
+      <p>Every model in this project was first evaluated on a <strong>random</strong> train/validation/test split &mdash; loans from every origination year scattered across all three. That tests generalization to held-out <em>loans</em>, never to a held-out <em>time period</em>. A live deployment doesn't get that luxury: it trains on history and predicts into a future it hasn't seen.</p>
+      <p>Rebuilding the entire comparison on a <strong>chronological</strong> split &mdash; train through 2013, validate on 2014, test purely on 2015&ndash;2016 &mdash; changes the conclusion's magnitude substantially, though not its direction.</p>
+      <figure>
+        <img src="methodology_comparison.png" alt="Grouped bar chart comparing net profit improvement over baseline under a random split versus an out-of-time split, for both LR-24 and XGBoost, at equal volume and equal loss rate." loading="lazy" />
+        <figcaption>Every bar shrinks 5&ndash;8x moving from a same-era holdout to a genuinely out-of-time test &mdash; and stays positive. The edge is real; the random-split estimate of its size was not.</figcaption>
+      </figure>
+      <div class="callout">
+        <p><strong>Why the shrinkage is real, not a bug:</strong> the out-of-time test population's own baseline already sits at 96.2% approval (vs. 93.3% on the random split) &mdash; underwriting mix shifted over the years covered &mdash; leaving mechanically less room for any model to reorder anyone. Discrimination itself barely moved (AUC &minus;0.001 for LR-24, &minus;0.009 for XGBoost); the composition of the test population did the rest.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="frontier">
+    <div class="wrap">
+      <h2>What "beating the baseline" looks like on unseen data</h2>
+      <p>Sorting applicants by predicted risk instead of by grade and sweeping the approval threshold traces a full frontier, not just one number. On the 2015&ndash;2016 test vintages &mdash; loans no model here ever trained on &mdash; both candidate models sit consistently below the baseline on loss rate and above it on profit, across the whole range.</p>
+      <figure>
+        <img src="oot_frontier_comparison.png" alt="Line chart showing loss rate and profit versus approval volume for the baseline grade cutoff, LR-24, and XGBoost, on the out-of-time test set." loading="lazy" />
+        <figcaption>Out-of-time test (2015&ndash;2016 vintages). XGBoost (purple) leads LR-24 (blue) on both axes; both lead the grade-only baseline (dashed grey).</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -217,50 +309,6 @@
     </div>
   </section>
 
-  <section id="question">
-    <div class="wrap">
-      <h2>The question, precisely</h2>
-      <p>Two candidate policies were built to replace grade-only bucketing: <strong style="color:var(--accent-lr24)">LR-24</strong>, a 24-feature logistic regression a credit committee can review line by line, and <strong style="color:var(--accent-xgb)">XGBoost</strong>, a 247-feature ensemble with materially better discrimination but a harder governance story. Both were scored against a grade-A&ndash;D baseline &mdash; LendingClub's own current-practice proxy &mdash; on two axes: at the <em>same approval volume</em>, does the model find a lower default rate? At the <em>same default rate</em>, does it approve more volume?</p>
-      <p>The answer to both is yes, for both models &mdash; but by how much depends entirely on how you evaluate it, which is the actual headline finding covered next.</p>
-      <div class="headline-stat">
-        <div class="figure real">
-          <div class="label">Real, out-of-time edge</div>
-          <div class="value num">$7K&ndash;$15K <span style="font-size:0.6em;font-weight:500;color:var(--muted);">/ 1,000 applicants</span></div>
-        </div>
-        <div class="figure naive">
-          <div class="label">What a same-era test would have claimed</div>
-          <div class="value num">$38K&ndash;$96K <span style="font-size:0.6em;font-weight:500;color:var(--muted);text-decoration:none;">/ 1,000 applicants</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="methodology">
-    <div class="wrap">
-      <h2>The methodology matters more than the model</h2>
-      <p>Every model in this project was first evaluated on a <strong>random</strong> train/validation/test split &mdash; loans from every origination year scattered across all three. That tests generalization to held-out <em>loans</em>, never to a held-out <em>time period</em>. A live deployment doesn't get that luxury: it trains on history and predicts into a future it hasn't seen.</p>
-      <p>Rebuilding the entire comparison on a <strong>chronological</strong> split &mdash; train through 2013, validate on 2014, test purely on 2015&ndash;2016 &mdash; changes the conclusion's magnitude substantially, though not its direction.</p>
-      <figure>
-        <img src="methodology_comparison.png" alt="Grouped bar chart comparing net profit improvement over baseline under a random split versus an out-of-time split, for both LR-24 and XGBoost, at equal volume and equal loss rate." loading="lazy" />
-        <figcaption>Every bar shrinks 5&ndash;8x moving from a same-era holdout to a genuinely out-of-time test &mdash; and stays positive. The edge is real; the random-split estimate of its size was not.</figcaption>
-      </figure>
-      <div class="callout">
-        <p><strong>Why the shrinkage is real, not a bug:</strong> the out-of-time test population's own baseline already sits at 96.2% approval (vs. 93.3% on the random split) &mdash; underwriting mix shifted over the years covered &mdash; leaving mechanically less room for any model to reorder anyone. Discrimination itself barely moved (AUC &minus;0.001 for LR-24, &minus;0.009 for XGBoost); the composition of the test population did the rest.</p>
-      </div>
-    </div>
-  </section>
-
-  <section id="frontier">
-    <div class="wrap">
-      <h2>What "beating the baseline" looks like on unseen data</h2>
-      <p>Sorting applicants by predicted risk instead of by grade and sweeping the approval threshold traces a full frontier, not just one number. On the 2015&ndash;2016 test vintages &mdash; loans no model here ever trained on &mdash; both candidate models sit consistently below the baseline on loss rate and above it on profit, across the whole range.</p>
-      <figure>
-        <img src="oot_frontier_comparison.png" alt="Line chart showing loss rate and profit versus approval volume for the baseline grade cutoff, LR-24, and XGBoost, on the out-of-time test set." loading="lazy" />
-        <figcaption>Out-of-time test (2015&ndash;2016 vintages). XGBoost (purple) leads LR-24 (blue) on both axes; both lead the grade-only baseline (dashed grey).</figcaption>
-      </figure>
-    </div>
-  </section>
-
   <section id="stress">
     <div class="wrap">
       <h2>Does the edge survive a bad year?</h2>
@@ -273,13 +321,82 @@
   </section>
 
   <section id="explainability">
-    <div class="wrap">
+    <div class="wrap wide">
       <h2>Explaining one decision, not just the whole model</h2>
       <p>A common objection to XGBoost is that it's a black box &mdash; but the actual regulatory bar (ECOA/Reg B) is narrower than full transparency: a declined applicant is owed <em>specific reasons</em>, not a shrug. TreeSHAP decomposes any individual prediction into exact per-feature contributions, giving a real, auditable reason list for any applicant. Every direction below matches domain intuition &mdash; higher interest rate and loan-to-income raise predicted risk, higher FICO and income lower it &mdash; which matters for conceptual soundness, not just adverse-action paperwork.</p>
       <figure>
         <img src="shap_summary.png" alt="SHAP beeswarm summary plot showing the distribution and direction of feature contributions across applicants, ranked by importance." loading="lazy" />
-        <figcaption>Global feature impact, XGBoost (out-of-time model), 5,000-applicant sample. Explore individual applicants below.</figcaption>
+        <figcaption>Global feature impact, XGBoost (out-of-time model), 5,000-applicant sample. Explore individual applicants above.</figcaption>
       </figure>
+      <h3 style="margin-top:1.6rem;">SHAP dependence: how each feature actually drives risk</h3>
+      <p>Related to, but not the same as, a classical partial dependence plot: each point is one real applicant's actual SHAP contribution for that feature, not a model-averaged synthetic grid &mdash; colored by a second, interacting feature. The shapes are what you'd want to see: mostly smooth and monotonic, no wild discontinuities that would suggest the model latched onto noise.</p>
+      <div class="dependence-gallery">
+        <figure><img src="shap_dependence_int_rate.png" alt="SHAP dependence plot for interest rate" loading="lazy" /><figcaption>Smoothly monotonic, flattens above ~20%.</figcaption></figure>
+        <figure><img src="shap_dependence_fico_avg.png" alt="SHAP dependence plot for FICO score" loading="lazy" /><figcaption>Clean, monotonic risk reduction.</figcaption></figure>
+        <figure><img src="shap_dependence_dti.png" alt="SHAP dependence plot for debt-to-income ratio" loading="lazy" /><figcaption>Monotonic, mild diminishing effect at the top.</figcaption></figure>
+        <figure><img src="shap_dependence_revol_util.png" alt="SHAP dependence plot for revolving utilization" loading="lazy" /><figcaption>Monotonic, consistent with utilization theory.</figcaption></figure>
+        <figure><img src="shap_dependence_bc_util.png" alt="SHAP dependence plot for bankcard utilization" loading="lazy" /><figcaption>Similar shape to overall utilization.</figcaption></figure>
+        <figure><img src="shap_dependence_mo_sin_old_rev_tl_op.png" alt="SHAP dependence plot for months since oldest revolving account opened" loading="lazy" /><figcaption>Longer history, modestly lower risk.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="decisions" class="wide">
+    <div class="wrap wide">
+      <h2>Decision points along the way</h2>
+      <p>This project involved dozens of methodology choices. The headline results above rest on these &mdash; each was a real judgment call, not an arbitrary default, and each is documented in full in the linked file.</p>
+      <div class="decision-grid">
+        <div class="decision-card">
+          <h3>Seasoning cutoffs, not a round number</h3>
+          <p>Loan-term-specific cutoffs (36-month loans through Feb 2016, 60-month through Mar 2014) were derived from a &ge;90% terminal-status threshold in the data itself, not picked as a tidy round date.</p>
+          <span class="doc-ref"><code>SCOPING.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>Feature selection, not hand-picked</h3>
+          <p>IV screening (30 of 83 candidates), then forward/backward/stepwise selection <em>and</em> a LASSO regularization path independently converged on the same ~24-feature set and the same AUC plateau &mdash; four different methods agreeing is much stronger evidence than any one of them alone.</p>
+          <span class="doc-ref"><code>FEATURE_SELECTION.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>AUC + calibration over F1</h3>
+          <p>F1 requires picking a threshold, and "optimize specificity" alone has a degenerate solution &mdash; approve everyone, specificity=1.0, catch zero defaults. KS and sensitivity-at-fixed-specificity were added as the industry-standard, threshold-aware alternative.</p>
+          <span class="doc-ref"><code>MODELING.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>XGBoost, not LightGBM</h3>
+          <p>LightGBM crashed reproducibly (native access violation) on this machine, confirmed via a synthetic-data test to rule out a data problem before substituting XGBoost.</p>
+          <span class="doc-ref"><code>FEATURE_SELECTION.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>Randomized search, not grid or k-fold CV</h3>
+          <p>Kept consistent with the project's single fixed train/val/test split throughout, rather than switching methodology mid-project. Finding: tuning bought less lift than feature selection did.</p>
+          <span class="doc-ref"><code>FEATURE_SELECTION.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>Deliberately overfitting, on purpose</h3>
+          <p>An unregularized model was trained specifically to find where validation performance peaks then degrades &mdash; a real epoch-by-epoch curve, not a guessed early-stopping point.</p>
+          <span class="doc-ref"><code>FEATURE_SELECTION.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>Out-of-time split, added after the fact</h3>
+          <p>The original split was random across every origination year. Rebuilding it chronologically was a direct response to a sharp question about whether that actually tested forward generalization &mdash; it didn't, fully, and the honest edge is 5-8x smaller as a result.</p>
+          <span class="doc-ref"><code>OOT_VALIDATION.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>Quantile segments, decided on validation only</h3>
+          <p>Segment boundaries were fixed using validation data, then checked for stability on test &mdash; never redefined using test outcomes. The naive "decline unprofitable segments" rule converges to approve-all on this book, which is itself a real, reportable finding about survivorship bias in the data.</p>
+          <span class="doc-ref"><code>SEGMENTATION_POLICY.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>Stress magnitudes, sized where possible</h3>
+          <p>The macro shock (bad rate &times;1.39) is this project's own 2008 crisis-vintage bad rate, not a guess. The severity shock (+20%) stayed a stated assumption after checking that vintage data shows no clean pattern to derive it from instead.</p>
+          <span class="doc-ref"><code>STEP8_BUSINESS_CASE.md</code></span>
+        </div>
+        <div class="decision-card">
+          <h3>Fair lending testing: not attempted, not faked</h3>
+          <p>This dataset has no protected-class fields and no applicant name field for a BISG proxy. Rather than build a weak zip-code-only substitute that could mislead in either direction, this is documented as an open gap.</p>
+          <span class="doc-ref">Discussed in project history, not a standalone file</span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -654,12 +771,34 @@
     update();
     renderVintage();
     renderDisagreement();
-    renderImpactChart("total");
+    renderImpactChart("per1000");
     document.getElementById("impactToggle").addEventListener("click", function (e) {
       var btn = e.target.closest("button");
       if (!btn) return;
       document.querySelectorAll("#impactToggle button").forEach(function (b) { b.classList.toggle("active", b === btn); });
       renderImpactChart(btn.dataset.v);
+    });
+    initScrollspy();
+  }
+
+  function initScrollspy() {
+    var links = document.querySelectorAll("#tocSidebar a");
+    if (!links.length || !("IntersectionObserver" in window)) return;
+    var linkByTarget = {};
+    links.forEach(function (a) { linkByTarget[a.getAttribute("href").slice(1)] = a; });
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var link = linkByTarget[entry.target.id];
+        if (!link) return;
+        if (entry.isIntersecting) {
+          links.forEach(function (a) { a.classList.remove("active"); });
+          link.classList.add("active");
+        }
+      });
+    }, { rootMargin: "-15% 0px -70% 0px", threshold: 0 });
+    Object.keys(linkByTarget).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) observer.observe(el);
     });
   }
 
