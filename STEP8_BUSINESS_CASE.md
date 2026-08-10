@@ -11,9 +11,11 @@ This uses the **out-of-time (OOT) numbers** from `OOT_VALIDATION.md`, not the or
 | Volume | 96.2% | 96.4% | 96.8% |
 | Bad rate | 14.06% | 14.06% (matched) | 14.06% (matched) |
 | Net profit / 1,000 applicants | $800,946 | $808,144 | $816,120 |
-| **Improvement over baseline** | — | **+$7,198** | **+$15,174** |
+| **Improvement over baseline (per 1,000)** | — | **+$7,198** | **+$15,174** |
+| Total net profit, full OOT population (n=332,261) | $266,123,187 | $268,514,666 | $271,164,785 |
+| **Improvement over baseline (total)** | — | **+$2,391,479** | **+$5,041,598** |
 
-That's the headline: switching from grade-only bucketing to a model-ranked policy is worth an estimated **$7,200 (interpretable model) to $15,200 (XGBoost) per 1,000 applicants**, at the same risk tolerance the business already accepts today. Modest, real, and — per `OOT_VALIDATION.md` — the honestly-scoped version of this number, not the inflated same-era estimate.
+That's the headline: switching from grade-only bucketing to a model-ranked policy is worth an estimated **$7,200 (interpretable model) to $15,200 (XGBoost) per 1,000 applicants** — the portable, scale-independent figure per the design doc's Section 4 definition. Applied to the actual size of the population it was measured on (332,261 applicants, the 2015-2016 OOT test window), that's **$2.4M to $5.0M** — a real number, not a rounding trick, just easy to lose sight of when everything else in this project is normalized per 1,000. One caveat worth keeping attached to the total: it's "if applied to a portfolio this size," not a forecast of any real institution's actual annual volume — that's exactly why the per-1,000 figure stays the primary one for cross-context comparison, and the total is presented alongside it, not instead of it.
 
 ## Stress-tested under two pessimistic scenarios
 

@@ -60,6 +60,7 @@
   .field select:focus, .field input:focus, button:focus { outline: 2px solid var(--accent-lr24); outline-offset: 1px; }
   .model-toggle { display: flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
   .model-toggle button { font: inherit; font-size: 0.85rem; padding: 0.42rem 0.9rem; border: none; background: var(--paper-raised); color: var(--ink-soft); cursor: pointer; }
+  .model-toggle button.active { background: var(--paper); color: var(--ink); font-weight: 700; }
   .model-toggle button.active[data-m="lr24"] { background: var(--accent-lr24-soft); color: var(--accent-lr24); font-weight: 700; }
   .model-toggle button.active[data-m="xgb"] { background: var(--accent-xgb-soft); color: var(--accent-xgb); font-weight: 700; }
   .range-field { min-width: 280px; }
@@ -132,9 +133,13 @@
   <section id="impact">
     <div class="wrap wide">
       <h2>Net business impact vs. the baseline</h2>
-      <p>Net profit per 1,000 applicants, out-of-time test set (2015&ndash;2016 vintages), at each policy's equal-loss-rate operating point &mdash; same risk tolerance as today, more approved volume.</p>
+      <p>Out-of-time test set (2015&ndash;2016 vintages), at each policy's equal-loss-rate operating point &mdash; same risk tolerance as today, more approved volume.</p>
+      <div class="model-toggle" id="impactToggle" style="margin-bottom:1rem;">
+        <button data-v="total" class="active" type="button">Total (this test population, n=332,261)</button>
+        <button data-v="per1000" type="button">Per 1,000 applicants</button>
+      </div>
       <div class="plot-box"><div id="impactChart"></div></div>
-      <p class="table-note">Full stress-testing and methodology behind these numbers is further down this page, and in <code>STEP8_BUSINESS_CASE.md</code>.</p>
+      <p class="table-note">"Total" is what these numbers add up to across the actual OOT test population &mdash; a real dollar figure, not a forecast of any institution's real annual volume. "Per 1,000" is the portable, scale-independent version used everywhere else in this project. Full stress-testing and methodology behind both is further down this page, and in <code>STEP8_BUSINESS_CASE.md</code>.</p>
     </div>
   </section>
 
@@ -542,27 +547,38 @@
     Plotly.newPlot("disagreementChart", [trace], layout, PLOTLY_CONFIG);
   }
 
-  function renderImpactChart() {
-    // Net profit per 1,000 applicants at each policy's equal-loss-rate operating
-    // point, OOT test set -- from images/oot_frontier_results.json /
-    // STEP8_BUSINESS_CASE.md. Fixed headline numbers, not derived from the
-    // 5,000-row explorer sample.
+  // Fixed headline numbers from images/oot_frontier_results.json /
+  // STEP8_BUSINESS_CASE.md -- not derived from the 5,000-row explorer
+  // sample. OOT_TEST_N is the actual size of the population these
+  // per-1,000 figures were measured on (2015-2016 OOT test set).
+  var OOT_TEST_N = 332261;
+  var IMPACT_PER_1000 = { baseline: 800946, lr24: 808144, xgb: 816120 };
+
+  function renderImpactChart(view) {
     var theme = plotlyTheme();
     var cats = ["Baseline\n(grade A-D)", "LR-24 policy", "XGBoost policy"];
-    var vals = [800946, 808144, 816120];
-    var deltas = [null, 7198, 15174];
+    var scale = view === "total" ? OOT_TEST_N / 1000 : 1;
+    var vals = [IMPACT_PER_1000.baseline * scale, IMPACT_PER_1000.lr24 * scale, IMPACT_PER_1000.xgb * scale];
+    var deltas = [null, vals[1] - vals[0], vals[2] - vals[0]];
     var colors = [cssVar("--muted"), cssVar("--accent-lr24"), cssVar("--accent-xgb")];
+    function fmt(v) {
+      if (view === "total") { return "$" + (v / 1e6).toFixed(2) + "M"; }
+      return "$" + Math.round(v).toLocaleString();
+    }
     var texts = vals.map(function (v, i) {
-      var base = "$" + Math.round(v).toLocaleString();
-      return deltas[i] ? base + "<br>(+$" + deltas[i].toLocaleString() + " vs. baseline)" : base;
+      return deltas[i] ? fmt(v) + "<br>(+" + fmt(deltas[i]) + " vs. baseline)" : fmt(v);
     });
     var trace = {
       x: cats, y: vals, type: "bar", marker: { color: colors },
       text: texts, textposition: "outside", hoverinfo: "text",
     };
     var layout = Object.assign({}, theme, {
-      height: 320, margin: { l: 60, r: 16, t: 30, b: 50 },
-      yaxis: { title: { text: "Net profit per 1,000 applicants ($)", font: { size: 11 } }, gridcolor: cssVar("--line"), range: [0, 900000] },
+      height: 320, margin: { l: 70, r: 16, t: 30, b: 50 },
+      yaxis: {
+        title: { text: view === "total" ? "Total net profit ($)" : "Net profit per 1,000 applicants ($)", font: { size: 11 } },
+        gridcolor: cssVar("--line"), range: [0, Math.max.apply(null, vals) * 1.18],
+        tickformat: view === "total" ? "$,.2s" : "$,.0f",
+      },
       font: Object.assign({}, theme.font, { size: 12 }),
     });
     Plotly.newPlot("impactChart", [trace], layout, PLOTLY_CONFIG);
@@ -638,7 +654,13 @@
     update();
     renderVintage();
     renderDisagreement();
-    renderImpactChart();
+    renderImpactChart("total");
+    document.getElementById("impactToggle").addEventListener("click", function (e) {
+      var btn = e.target.closest("button");
+      if (!btn) return;
+      document.querySelectorAll("#impactToggle button").forEach(function (b) { b.classList.toggle("active", b === btn); });
+      renderImpactChart(btn.dataset.v);
+    });
   }
 
   fetch("explorer_data.json")
