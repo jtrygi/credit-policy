@@ -16,19 +16,8 @@
     --shadow: 0 1px 2px rgba(27,36,48,0.06), 0 4px 16px rgba(27,36,48,0.05);
     --plot-bg: #FFFFFF;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ink: #E7EAEF; --ink-soft: #C3CAD6; --paper: #14171C; --paper-raised: #1C2027;
-      --muted: #8A93A3; --line: #2B303A;
-      --accent-lr24: #6D9BFF; --accent-lr24-soft: #1E2A4D;
-      --accent-xgb: #B79BFF; --accent-xgb-soft: #2C1F4D;
-      --good: #34D399; --good-soft: #0E2B22; --bad: #F87171; --bad-soft: #3A1414;
-      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.35);
-      --plot-bg: #1C2027;
-    }
-  }
   * { box-sizing: border-box; }
-  html { color-scheme: light dark; }
+  html { color-scheme: light; }
   body {
     margin: 0; background: var(--paper); color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, sans-serif;
@@ -73,7 +62,30 @@
   .model-toggle button { font: inherit; font-size: 0.85rem; padding: 0.42rem 0.9rem; border: none; background: var(--paper-raised); color: var(--ink-soft); cursor: pointer; }
   .model-toggle button.active[data-m="lr24"] { background: var(--accent-lr24-soft); color: var(--accent-lr24); font-weight: 700; }
   .model-toggle button.active[data-m="xgb"] { background: var(--accent-xgb-soft); color: var(--accent-xgb); font-weight: 700; }
-  .range-field { min-width: 220px; }
+  .range-field { min-width: 280px; }
+  .pd-controls { display: flex; align-items: center; gap: 0.6rem; }
+  .pd-input-group { display: flex; align-items: center; gap: 0.25rem; }
+  .pd-number { width: 4.2rem; font: inherit; padding: 0.4rem 0.4rem; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+  .pd-suffix { color: var(--muted); font-size: 0.85rem; }
+  .dual-slider { position: relative; height: 28px; flex: 1; min-width: 110px; }
+  .dual-slider-track { position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: var(--line); border-radius: 2px; transform: translateY(-50%); }
+  .dual-slider-range { position: absolute; top: 50%; height: 4px; background: var(--accent-xgb); border-radius: 2px; transform: translateY(-50%); }
+  .dual-slider input[type="range"] {
+    position: absolute; top: 0; left: 0; width: 100%; height: 28px; margin: 0;
+    background: transparent; -webkit-appearance: none; appearance: none; pointer-events: none;
+  }
+  .dual-slider input[type="range"]::-webkit-slider-runnable-track { background: transparent; -webkit-appearance: none; }
+  .dual-slider input[type="range"]::-moz-range-track { background: transparent; }
+  .dual-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; pointer-events: auto; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent-xgb); border: 2px solid var(--paper-raised); box-shadow: 0 1px 3px rgba(27,36,48,0.35); cursor: pointer; margin-top: 6px;
+  }
+  .dual-slider input[type="range"]::-moz-range-thumb {
+    pointer-events: auto; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent-xgb); border: 2px solid var(--paper-raised); box-shadow: 0 1px 3px rgba(27,36,48,0.35); cursor: pointer;
+  }
+  .dual-slider input[type="range"]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent-lr24); outline-offset: 2px; }
+  .table-controls { display: flex; gap: 1rem; margin-bottom: 0.9rem; }
   .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; margin-bottom: 1.4rem; }
   .stat-card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 0.8rem 1rem; }
   .stat-card .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3em; }
@@ -113,25 +125,108 @@
     <span class="eyebrow">Credit Risk Policy &middot; Interactive Model Explorer</span>
     <h1>Does a richer model beat LendingClub's own grade cutoff?</h1>
     <p>LendingClub sorts applicants into 7 risk grades &mdash; a single score, coarsely bucketed &mdash; and approves everyone above a cutoff. This page walks through whether a model built from 24&ndash;247 variables ranks default risk better than that one score, tested the honest way: on loans originated <em>after</em> everything the model ever trained on.</p>
-    <div class="headline-stat">
-      <div class="figure real">
-        <div class="label">Real, out-of-time edge</div>
-        <div class="value num">$7K&ndash;$15K <span style="font-size:0.6em;font-weight:500;color:var(--muted);">/ 1,000 applicants</span></div>
-      </div>
-      <div class="figure naive">
-        <div class="label">What a same-era test would have claimed</div>
-        <div class="value num">$38K&ndash;$96K <span style="font-size:0.6em;font-weight:500;color:var(--muted);text-decoration:none;">/ 1,000 applicants</span></div>
-      </div>
-    </div>
   </div>
 </header>
 
 <main>
+  <section id="impact">
+    <div class="wrap wide">
+      <h2>Net business impact vs. the baseline</h2>
+      <p>Net profit per 1,000 applicants, out-of-time test set (2015&ndash;2016 vintages), at each policy's equal-loss-rate operating point &mdash; same risk tolerance as today, more approved volume.</p>
+      <div class="plot-box"><div id="impactChart"></div></div>
+      <p class="table-note">Full stress-testing and methodology behind these numbers is further down this page, and in <code>STEP8_BUSINESS_CASE.md</code>.</p>
+    </div>
+  </section>
+
+  <section id="explore" class="wide">
+    <div class="wrap wide">
+      <h2>Explore the applicants yourself</h2>
+      <p>A 5,000-applicant sample of the out-of-time test set (2015&ndash;2016 vintages, never trained on). Filter by score, grade, or loan purpose; switch between models; look up individual applicants and their SHAP reason codes.</p>
+
+      <div class="explorer">
+        <div class="filters">
+          <div class="field">
+            <label>Model</label>
+            <div class="model-toggle" id="modelToggle">
+              <button data-m="xgb" class="active" type="button">XGBoost</button>
+              <button data-m="lr24" type="button">LR-24</button>
+            </div>
+          </div>
+          <div class="field range-field">
+            <label>Predicted default risk</label>
+            <div class="pd-controls">
+              <div class="pd-input-group"><input type="number" id="pdFromInput" min="0" max="100" value="0" class="pd-number num" /><span class="pd-suffix">%</span></div>
+              <div class="dual-slider">
+                <div class="dual-slider-track"></div>
+                <div class="dual-slider-range" id="pdRangeFill"></div>
+                <input type="range" id="pdMin" min="0" max="100" value="0" step="1" />
+                <input type="range" id="pdMax" min="0" max="100" value="100" step="1" />
+              </div>
+              <div class="pd-input-group"><input type="number" id="pdToInput" min="0" max="100" value="100" class="pd-number num" /><span class="pd-suffix">%</span></div>
+            </div>
+          </div>
+          <div class="field"><label>Grade</label><select id="gradeFilter"><option value="ALL">All grades</option></select></div>
+          <div class="field"><label>Purpose</label><select id="purposeFilter"><option value="ALL">All purposes</option></select></div>
+          <div class="field">
+            <label>Outcome</label>
+            <select id="outcomeFilter">
+              <option value="ALL">All outcomes</option>
+              <option value="0">Fully paid</option>
+              <option value="1">Charged off</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="small-n-warning" id="smallNWarning">&#9888; Small sample (n &lt; 30) &mdash; these figures are noisy, interpret with caution.</div>
+        <div class="stat-cards" id="statCards"></div>
+
+        <div class="charts-row">
+          <div class="chart-box"><h3>Score distribution</h3><div id="histChart"></div></div>
+          <div class="chart-box"><h3>Calibration (predicted vs. actual, by decile)</h3><div id="calChart"></div></div>
+        </div>
+
+        <div class="table-controls">
+          <div class="field"><label>Show</label>
+            <select id="tableView">
+              <option value="riskiest">Highest predicted risk</option>
+              <option value="safest">Lowest predicted risk</option>
+              <option value="random">Random sample</option>
+            </select>
+          </div>
+          <div class="field"><label>Count</label>
+            <select id="tableCount">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="applicants">
+            <thead><tr><th>Grade</th><th>Predicted PD</th><th>Outcome</th><th>Net $</th><th>Int. rate</th><th>DTI</th><th>FICO</th><th>Purpose</th></tr></thead>
+            <tbody id="applicantRows"></tbody>
+          </table>
+        </div>
+        <p class="table-note" id="tableNote"></p>
+      </div>
+    </div>
+  </section>
+
   <section id="question">
     <div class="wrap">
       <h2>The question, precisely</h2>
       <p>Two candidate policies were built to replace grade-only bucketing: <strong style="color:var(--accent-lr24)">LR-24</strong>, a 24-feature logistic regression a credit committee can review line by line, and <strong style="color:var(--accent-xgb)">XGBoost</strong>, a 247-feature ensemble with materially better discrimination but a harder governance story. Both were scored against a grade-A&ndash;D baseline &mdash; LendingClub's own current-practice proxy &mdash; on two axes: at the <em>same approval volume</em>, does the model find a lower default rate? At the <em>same default rate</em>, does it approve more volume?</p>
-      <p>The answer to both is yes, for both models &mdash; but by how much depends entirely on how you evaluate it, which is the actual headline finding here.</p>
+      <p>The answer to both is yes, for both models &mdash; but by how much depends entirely on how you evaluate it, which is the actual headline finding covered next.</p>
+      <div class="headline-stat">
+        <div class="figure real">
+          <div class="label">Real, out-of-time edge</div>
+          <div class="value num">$7K&ndash;$15K <span style="font-size:0.6em;font-weight:500;color:var(--muted);">/ 1,000 applicants</span></div>
+        </div>
+        <div class="figure naive">
+          <div class="label">What a same-era test would have claimed</div>
+          <div class="value num">$38K&ndash;$96K <span style="font-size:0.6em;font-weight:500;color:var(--muted);text-decoration:none;">/ 1,000 applicants</span></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -180,56 +275,6 @@
         <img src="shap_summary.png" alt="SHAP beeswarm summary plot showing the distribution and direction of feature contributions across applicants, ranked by importance." loading="lazy" />
         <figcaption>Global feature impact, XGBoost (out-of-time model), 5,000-applicant sample. Explore individual applicants below.</figcaption>
       </figure>
-    </div>
-  </section>
-
-  <section id="explore" class="wide">
-    <div class="wrap wide">
-      <h2>Explore the applicants yourself</h2>
-      <p>A 5,000-applicant sample of the out-of-time test set (2015&ndash;2016 vintages, never trained on). Filter by score, grade, or loan purpose; switch between models; click any row for its SHAP reason codes.</p>
-
-      <div class="explorer">
-        <div class="filters">
-          <div class="field">
-            <label>Model</label>
-            <div class="model-toggle" id="modelToggle">
-              <button data-m="xgb" class="active" type="button">XGBoost</button>
-              <button data-m="lr24" type="button">LR-24</button>
-            </div>
-          </div>
-          <div class="field range-field">
-            <label>Predicted default risk <span id="pdRangeLabel" class="num">0%&ndash;100%</span></label>
-            <input type="range" id="pdMin" min="0" max="100" value="0" step="1" />
-            <input type="range" id="pdMax" min="0" max="100" value="100" step="1" />
-          </div>
-          <div class="field"><label>Grade</label><select id="gradeFilter"><option value="ALL">All grades</option></select></div>
-          <div class="field"><label>Purpose</label><select id="purposeFilter"><option value="ALL">All purposes</option></select></div>
-          <div class="field">
-            <label>Outcome</label>
-            <select id="outcomeFilter">
-              <option value="ALL">All outcomes</option>
-              <option value="0">Fully paid</option>
-              <option value="1">Charged off</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="small-n-warning" id="smallNWarning">&#9888; Small sample (n &lt; 30) &mdash; these figures are noisy, interpret with caution.</div>
-        <div class="stat-cards" id="statCards"></div>
-
-        <div class="charts-row">
-          <div class="chart-box"><h3>Score distribution</h3><div id="histChart"></div></div>
-          <div class="chart-box"><h3>Calibration (predicted vs. actual, by decile)</h3><div id="calChart"></div></div>
-        </div>
-
-        <div class="table-scroll">
-          <table class="applicants">
-            <thead><tr><th>Grade</th><th>Predicted PD</th><th>Outcome</th><th>Net $</th><th>Int. rate</th><th>DTI</th><th>FICO</th><th>Purpose</th></tr></thead>
-            <tbody id="applicantRows"></tbody>
-          </table>
-        </div>
-        <p class="table-note" id="tableNote"></p>
-      </div>
     </div>
   </section>
 
@@ -292,7 +337,7 @@
   }
   var PLOTLY_CONFIG = { displayModeBar: false, responsive: true };
 
-  var state = { model: "xgb", pdMin: 0, pdMax: 100, grade: "ALL", purpose: "ALL", outcome: "ALL" };
+  var state = { model: "xgb", pdMin: 0, pdMax: 100, grade: "ALL", purpose: "ALL", outcome: "ALL", tableView: "riskiest", tableCount: 20 };
   var ROWS = [], VINTAGES = [];
 
   function fmtPct(x) { return (x * 100).toFixed(1) + "%"; }
@@ -410,7 +455,19 @@
       document.getElementById("tableNote").textContent = "Showing 0 of 0 matching applicants.";
       return;
     }
-    var shown = rows.slice().sort(function (a, b) { return b[key] - a[key]; }).slice(0, 250);
+    var count = state.tableCount;
+    var shown;
+    var viewLabel;
+    if (state.tableView === "riskiest") {
+      shown = rows.slice().sort(function (a, b) { return b[key] - a[key]; }).slice(0, count);
+      viewLabel = "highest predicted risk";
+    } else if (state.tableView === "safest") {
+      shown = rows.slice().sort(function (a, b) { return a[key] - b[key]; }).slice(0, count);
+      viewLabel = "lowest predicted risk";
+    } else {
+      shown = rows.slice().sort(function () { return Math.random() - 0.5; }).slice(0, count);
+      viewLabel = "a random sample";
+    }
     shown.forEach(function (r) {
       var tr = document.createElement("tr");
       tr.innerHTML =
@@ -426,8 +483,8 @@
       tbody.appendChild(tr);
     });
     document.getElementById("tableNote").textContent =
-      "Showing " + shown.length.toLocaleString() + " of " + rows.length.toLocaleString() +
-      " matching applicants (sorted by predicted PD, highest first). Click a row for its SHAP reason codes.";
+      "Showing " + viewLabel + " (" + shown.length + " of " + rows.length.toLocaleString() +
+      " matching applicants). Click a row for its SHAP reason codes.";
   }
 
   function toggleReasons(tr, r) {
@@ -485,6 +542,32 @@
     Plotly.newPlot("disagreementChart", [trace], layout, PLOTLY_CONFIG);
   }
 
+  function renderImpactChart() {
+    // Net profit per 1,000 applicants at each policy's equal-loss-rate operating
+    // point, OOT test set -- from images/oot_frontier_results.json /
+    // STEP8_BUSINESS_CASE.md. Fixed headline numbers, not derived from the
+    // 5,000-row explorer sample.
+    var theme = plotlyTheme();
+    var cats = ["Baseline\n(grade A-D)", "LR-24 policy", "XGBoost policy"];
+    var vals = [800946, 808144, 816120];
+    var deltas = [null, 7198, 15174];
+    var colors = [cssVar("--muted"), cssVar("--accent-lr24"), cssVar("--accent-xgb")];
+    var texts = vals.map(function (v, i) {
+      var base = "$" + Math.round(v).toLocaleString();
+      return deltas[i] ? base + "<br>(+$" + deltas[i].toLocaleString() + " vs. baseline)" : base;
+    });
+    var trace = {
+      x: cats, y: vals, type: "bar", marker: { color: colors },
+      text: texts, textposition: "outside", hoverinfo: "text",
+    };
+    var layout = Object.assign({}, theme, {
+      height: 320, margin: { l: 60, r: 16, t: 30, b: 50 },
+      yaxis: { title: { text: "Net profit per 1,000 applicants ($)", font: { size: 11 } }, gridcolor: cssVar("--line"), range: [0, 900000] },
+      font: Object.assign({}, theme.font, { size: 12 }),
+    });
+    Plotly.newPlot("impactChart", [trace], layout, PLOTLY_CONFIG);
+  }
+
   function update() {
     var rows = filteredRows();
     renderStats(rows);
@@ -503,6 +586,24 @@
     });
   }
 
+  function syncPdFill() {
+    document.getElementById("pdRangeFill").style.left = state.pdMin + "%";
+    document.getElementById("pdRangeFill").style.width = (state.pdMax - state.pdMin) + "%";
+  }
+
+  function setPdRange(lo, hi) {
+    lo = Math.max(0, Math.min(100, Math.round(lo)));
+    hi = Math.max(0, Math.min(100, Math.round(hi)));
+    if (lo > hi) lo = hi;
+    state.pdMin = lo; state.pdMax = hi;
+    document.getElementById("pdMin").value = lo;
+    document.getElementById("pdMax").value = hi;
+    document.getElementById("pdFromInput").value = lo;
+    document.getElementById("pdToInput").value = hi;
+    syncPdFill();
+    update();
+  }
+
   function init() {
     populateSelect("gradeFilter", uniqueSorted("grade"));
     populateSelect("purposeFilter", uniqueSorted("purpose"), function (v) {
@@ -515,22 +616,29 @@
       document.querySelectorAll("#modelToggle button").forEach(function (b) { b.classList.toggle("active", b === btn); });
       update();
     });
-    ["pdMin", "pdMax"].forEach(function (id) {
-      document.getElementById(id).addEventListener("input", function () {
-        var lo = +document.getElementById("pdMin").value, hi = +document.getElementById("pdMax").value;
-        if (lo > hi) { var t = lo; lo = hi; hi = t; }
-        state.pdMin = lo; state.pdMax = hi;
-        document.getElementById("pdRangeLabel").textContent = lo + "%–" + hi + "%";
-        update();
-      });
+
+    document.getElementById("pdMin").addEventListener("input", function (e) {
+      var lo = +e.target.value;
+      setPdRange(lo, Math.max(lo, state.pdMax));
     });
+    document.getElementById("pdMax").addEventListener("input", function (e) {
+      var hi = +e.target.value;
+      setPdRange(Math.min(state.pdMin, hi), hi);
+    });
+    document.getElementById("pdFromInput").addEventListener("change", function (e) { setPdRange(+e.target.value, state.pdMax); });
+    document.getElementById("pdToInput").addEventListener("change", function (e) { setPdRange(state.pdMin, +e.target.value); });
+
     document.getElementById("gradeFilter").addEventListener("change", function (e) { state.grade = e.target.value; update(); });
     document.getElementById("purposeFilter").addEventListener("change", function (e) { state.purpose = e.target.value; update(); });
     document.getElementById("outcomeFilter").addEventListener("change", function (e) { state.outcome = e.target.value; update(); });
+    document.getElementById("tableView").addEventListener("change", function (e) { state.tableView = e.target.value; renderTable(filteredRows()); });
+    document.getElementById("tableCount").addEventListener("change", function (e) { state.tableCount = +e.target.value; renderTable(filteredRows()); });
 
+    syncPdFill();
     update();
     renderVintage();
     renderDisagreement();
+    renderImpactChart();
   }
 
   fetch("explorer_data.json")
